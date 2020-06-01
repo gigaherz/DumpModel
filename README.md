@@ -4,10 +4,11 @@ A small client-only forge mod to dump models from items and blocks.
 # Setup
 
 ## Outside Development Environments
-Download the mod from the [releases](https://github.com/gigaherz/DumpModel/releases) page and place.
+Download the mod from the [releases](https://github.com/gigaherz/DumpModel/releases) page and place it in your mods folder.
 
 ## In Development Environments
-Add the mod as a dependency
+Add the mod as a dependency.
+
 ```gradle
 repositories {
     maven { url 'https://dogforce-games.com/maven' }
