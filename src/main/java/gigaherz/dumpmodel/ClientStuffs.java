@@ -6,8 +6,12 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.OverlayRenderer;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.model.IBakedModel;
+import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.client.renderer.tileentity.TileEntityRenderer;
+import net.minecraft.client.renderer.tileentity.TileEntityRendererDispatcher;
 import net.minecraft.command.CommandSource;
 import net.minecraft.command.Commands;
 import net.minecraft.command.ICommandSource;
@@ -18,7 +22,9 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.boss.dragon.EnderDragonEntity;
 import net.minecraft.entity.boss.dragon.EnderDragonPartEntity;
 import net.minecraft.item.ItemStack;
+import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.math.EntityRayTraceResult;
 import net.minecraft.util.math.RayTraceResult;
@@ -66,7 +72,7 @@ public class ClientStuffs
                         })))
                         .then(Commands.literal("block").then(Commands.argument("block", BlockStateArgument.blockState()).executes((ctx) -> {
                             if (ctx.getSource().getWorld() != null) return 1;
-                            return dumpBlockModel(BlockStateArgument.getBlockState(ctx, "block").getState(), EmptyModelData.INSTANCE);
+                            return dumpBlockModel(BlockStateArgument.getBlockState(ctx, "block").getState(), null);
                         })))
                         .then(Commands.literal("entity").then(Commands.argument("entity", EntityArgument.entity()).executes((ctx) -> {
                             if (ctx.getSource().getWorld() != null) return 1;
@@ -129,8 +135,7 @@ public class ClientStuffs
         {
             BlockRayTraceResult br = (BlockRayTraceResult) mc.objectMouseOver;
             BlockState state = Objects.requireNonNull(mc.world).getBlockState(br.getPos());
-            IModelData data = ModelDataManager.getModelData(mc.world, br.getPos());
-            return dumpBlockModel(state, data != null ? data : EmptyModelData.INSTANCE);
+            return dumpBlockModel(state, br.getPos());
         }
         else if (mc.objectMouseOver.getType() == RayTraceResult.Type.ENTITY)
         {
@@ -161,13 +166,32 @@ public class ClientStuffs
         {
             file = folder.resolve(regName.getPath() + ".obj");
         }
-        return dump(mc, model, folder, file, null, EmptyModelData.INSTANCE);
+
+        if (model.isBuiltInRenderer())
+        {
+            VertexDumper dumper = new VertexDumper();
+            stack.getItem().getItemStackTileEntityRenderer()
+                    .render(stack, new MatrixStack(), dumper, 0x00F000F0, OverlayTexture.NO_OVERLAY);
+
+            return dumpVertexDumper(regName.toString(), mc, dumper, folder, file);
+        }
+        else
+        {
+            return dumpBakedModel(mc, model, folder, file, null, EmptyModelData.INSTANCE);
+        }
     }
 
-    private static int dumpBlockModel(BlockState state, IModelData data)
+    private static int dumpBlockModel(BlockState state, @Nullable BlockPos pos)
     {
         Minecraft mc = Minecraft.getInstance();
-        IBakedModel model = mc.getBlockRendererDispatcher().getBlockModelShapes().getModel(state);
+
+        IModelData data = EmptyModelData.INSTANCE;
+        if (pos != null)
+        {
+            data = ModelDataManager.getModelData(Objects.requireNonNull(mc.world), pos);
+            if (data == null) data = EmptyModelData.INSTANCE;
+        }
+
         ResourceLocation regName = state.getBlock().getRegistryName();
         if (regName == null)
             throw new RuntimeException("Block registry name is null");
@@ -175,7 +199,45 @@ public class ClientStuffs
                 .resolve("models/blocks")
                 .resolve(regName.getNamespace());
         Path file = folder.resolve(regName.getPath() + ".obj");
-        return dump(mc, model, folder, file, state, data);
+
+        VertexDumper dumper = new VertexDumper();
+        IBakedModel model = mc.getBlockRendererDispatcher().getBlockModelShapes().getModel(state);
+        switch(state.getRenderType())
+        {
+            case MODEL:
+                if (!model.isBuiltInRenderer())
+                {
+                    mc.getBlockRendererDispatcher().renderBlock(state, new MatrixStack(), dumper, 0x00F000F0, OverlayTexture.NO_OVERLAY, data);
+                }
+                // fallthrough;
+            case ENTITYBLOCK_ANIMATED:
+                if (pos != null)
+                {
+                    TileEntity te = mc.world.getTileEntity(pos);
+                    if (te != null)
+                    {
+                        TileEntityRenderer<TileEntity> ter = TileEntityRendererDispatcher.instance.getRenderer(te);
+                        if (ter == null)
+                        {
+                            mc.ingameGUI.addChatMessage(ChatType.SYSTEM, new StringTextComponent("The block needs a builtin renderer but there is no TileEntity Renderer."));
+                            return 0;
+                        }
+                        ter.render(te, mc.getRenderPartialTicks(), new MatrixStack(), dumper, 0x00F000F0, OverlayTexture.NO_OVERLAY);
+                    }
+                    else if (model.isBuiltInRenderer())
+                    {
+                        mc.ingameGUI.addChatMessage(ChatType.SYSTEM, new StringTextComponent("The block needs a builtin renderer but there is no TileEntity."));
+                        return 0;
+                    }
+                }
+                else if (model.isBuiltInRenderer())
+                {
+                    mc.ingameGUI.addChatMessage(ChatType.SYSTEM, new StringTextComponent("The block needs a builtin renderer but I have no BlockPos context."));
+                    return 0;
+                }
+                break;
+        }
+        return dumpVertexDumper(regName.toString(), mc, dumper, folder, file);
     }
 
     private static int dumpEntityRenderer(Entity entity)
@@ -214,16 +276,7 @@ public class ClientStuffs
                     .resolve(regName.getNamespace());
             Path file = folder.resolve(regName.getPath() + ".obj");
 
-            File outFolder = folder.toFile();
-            File outFile = file.toFile();
-
-            //noinspection ResultOfMethodCallIgnored
-            outFolder.mkdirs();
-
-            dumper.dumpToOBJ(outFile, entity.getScoreboardName());
-
-            showSuccessMessage(mc, outFolder, outFile);
-            return 1;
+            return dumpVertexDumper(entity.getScoreboardName(), mc, dumper, folder, file);
         }
         catch(Exception e)
         {
@@ -232,7 +285,21 @@ public class ClientStuffs
         }
     }
 
-    private static int dump(Minecraft mc, IBakedModel model, Path folder, Path file, @Nullable BlockState state, IModelData data)
+    private static int dumpVertexDumper(String name, Minecraft mc, VertexDumper dumper, Path folder, Path file)
+    {
+        File outFolder = folder.toFile();
+        File outFile = file.toFile();
+
+        //noinspection ResultOfMethodCallIgnored
+        outFolder.mkdirs();
+
+        dumper.dumpToOBJ(outFile, name);
+
+        showSuccessMessage(mc, outFolder, outFile);
+        return 1;
+    }
+
+    private static int dumpBakedModel(Minecraft mc, IBakedModel model, Path folder, Path file, @Nullable BlockState state, IModelData data)
     {
         File outFolder = folder.toFile();
         File outFile = file.toFile();
