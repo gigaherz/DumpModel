@@ -1,7 +1,5 @@
 # DumpModel
-A small client-only forge mod to dump models from items and blocks to .OBJ file format.
-
-
+A small client-only forge mod to dump models from items, blocks and entities to .OBJ file format.
 
 # Setup
 
@@ -16,7 +14,7 @@ repositories {
     maven { url 'https://dogforce-games.com/maven' }
 }
 dependencies {
-    runtimeOnly fg.deobf('gigaherz.dumpmodel:DumpModel-1.15.2:1.2')
+    runtimeOnly fg.deobf('gigaherz.dumpmodel:DumpModel-1.15.2:1.3')
 }
 ```
 
@@ -31,5 +29,6 @@ I'll trust you can type it correctly. ;)
 /dumpmodel held                          Dumps the item currently held in the main hand.
            target                        Dumps the block currently targetted. This will include any existing model data, unlike the 'block' option.
            item <item>[<nbt>]            Dumps the given item (optionally with the given NBT tag).
-           block <block>[<properties>]   Dumps the given blockstate
+           block <block>[<properties>]   Dumps the given blockstate.
+           entity <selector>             Dumps the given entity. Must be an existing entity in the world.
 ```
