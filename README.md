@@ -16,9 +16,11 @@ repositories {
     maven { url 'https://dogforce-games.com/maven' }
 }
 dependencies {
-    runtimeOnly fg.deobf('gigaherz.dumpmodel:DumpModel-1.15.2:1.0')
+    runtimeOnly fg.deobf('gigaherz.dumpmodel:DumpModel-1.15.2:1.1')
 }
 ```
+
+(Do check the releases page for the latest version. I can't ensure I didn't forget to update the readme.)
 
 # Usage
 DumpModel has one single client-side command.
