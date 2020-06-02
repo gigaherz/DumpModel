@@ -1,5 +1,7 @@
 # DumpModel
-A small client-only forge mod to dump models from items and blocks.
+A small client-only forge mod to dump models from items and blocks to .OBJ file format.
+
+
 
 # Setup
 
@@ -25,7 +27,7 @@ I'll trust you can type it correctly. ;)
 
 ```
 /dumpmodel held                          Dumps the item currently held in the main hand.
-           target                        Dumps the block currently targetted.
+           target                        Dumps the block currently targetted. This will include any existing model data, unlike the 'block' option.
            item <item>[<nbt>]            Dumps the given item (optionally with the given NBT tag).
            block <block>[<properties>]   Dumps the given blockstate
 ```

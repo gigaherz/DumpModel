@@ -1,14 +1,18 @@
 package gigaherz.dumpmodel;
 
 import com.google.common.collect.Lists;
+import net.minecraft.block.BlockState;
 import net.minecraft.client.renderer.model.BakedQuad;
 import net.minecraft.client.renderer.model.IBakedModel;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.renderer.vertex.VertexFormat;
 import net.minecraft.client.renderer.vertex.VertexFormatElement;
 import net.minecraft.util.Direction;
+import net.minecraft.world.World;
 import net.minecraftforge.client.model.data.EmptyModelData;
+import net.minecraftforge.client.model.data.IModelData;
 
+import javax.annotation.Nullable;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -20,7 +24,7 @@ public class DumpBakedModel
             null, Direction.EAST, Direction.WEST, Direction.NORTH, Direction.SOUTH, Direction.UP, Direction.DOWN
     };
 
-    public static void dumpToOBJ(File file, String name, IBakedModel model)
+    public static void dumpToOBJ(File file, String name, IBakedModel model, @Nullable BlockState state, IModelData modelData)
     {
         try (OutputStream stream = new FileOutputStream(file);
              OutputStreamWriter writer = new OutputStreamWriter(stream))
@@ -37,7 +41,7 @@ public class DumpBakedModel
             {
                 writer.write(String.format("g %s\n", dir));
 
-                for (BakedQuad quad : model.getQuads(null, dir, rand, EmptyModelData.INSTANCE))
+                for (BakedQuad quad : model.getQuads(state, dir, rand, modelData))
                 {
                     VertexFormat fmt = DefaultVertexFormats.BLOCK;
                     int[] data = quad.getVertexData();
