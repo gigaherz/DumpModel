@@ -16,7 +16,7 @@ repositories {
     maven { url 'https://dogforce-games.com/maven' }
 }
 dependencies {
-    runtimeOnly fg.deobf('gigaherz.dumpmodel:DumpModel-1.15.2:1.1')
+    runtimeOnly fg.deobf('gigaherz.dumpmodel:DumpModel-1.15.2:1.2')
 }
 ```
 
