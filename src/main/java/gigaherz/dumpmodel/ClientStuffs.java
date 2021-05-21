@@ -4,11 +4,13 @@ import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import gigaherz.dumpmodel.builders.OBJBuilder;
+import net.minecraft.block.BlockRenderType;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.OverlayRenderer;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.model.IBakedModel;
+import net.minecraft.client.renderer.model.ItemCameraTransforms;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.tileentity.TileEntityRenderer;
 import net.minecraft.client.renderer.tileentity.TileEntityRendererDispatcher;
@@ -23,15 +25,14 @@ import net.minecraft.entity.boss.dragon.EnderDragonEntity;
 import net.minecraft.entity.boss.dragon.EnderDragonPartEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.Hand;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.Util;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.math.EntityRayTraceResult;
 import net.minecraft.util.math.RayTraceResult;
-import net.minecraft.util.text.ChatType;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.StringTextComponent;
-import net.minecraft.util.text.TextFormatting;
+import net.minecraft.util.text.*;
 import net.minecraft.util.text.event.ClickEvent;
 import net.minecraft.util.text.event.HoverEvent;
 import net.minecraftforge.client.event.ClientChatEvent;
@@ -44,6 +45,7 @@ import javax.annotation.Nullable;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.Objects;
+import java.util.UUID;
 
 public class ClientStuffs
 {
@@ -58,10 +60,20 @@ public class ClientStuffs
     {
         dispatcher.register(
                 LiteralArgumentBuilder.<CommandSource>literal("dumpmodel")
-                        .then(Commands.literal("held").executes((ctx) -> {
-                            if (ctx.getSource().getWorld() != null) return 1;
-                            return dumpHeldItem();
-                        }))
+                        .then(Commands.literal("held")
+                                .executes((ctx) -> {
+                                    if (ctx.getSource().getWorld() != null) return 1;
+                                    return dumpHeldItem(Hand.MAIN_HAND);
+                                })
+                                .then(Commands.literal("mainhand").executes(ctx -> {
+                                    if (ctx.getSource().getWorld() != null) return 1;
+                                    return dumpHeldItem(Hand.MAIN_HAND);
+                                }))
+                                .then(Commands.literal("offhand").executes(ctx -> {
+                                    if (ctx.getSource().getWorld() != null) return 1;
+                                    return dumpHeldItem(Hand.OFF_HAND);
+                                }))
+                        )
                         .then(Commands.literal("target").executes((ctx) -> {
                             if (ctx.getSource().getWorld() != null) return 1;
                             return dumpTargettedBlock();
@@ -77,7 +89,8 @@ public class ClientStuffs
                         .then(Commands.literal("entity").then(Commands.argument("entity", EntityArgument.entity()).executes((ctx) -> {
                             if (ctx.getSource().getWorld() != null) return 1;
                             return dumpEntityRenderer(EntityArgument.getEntity(ctx, "entity"));
-                        }))));
+                        })))
+        );
     }
 
     public static void onClientChat(ClientChatEvent event)
@@ -104,18 +117,18 @@ public class ClientStuffs
         }
         catch (CommandSyntaxException e)
         {
-            mc.ingameGUI.addChatMessage(ChatType.SYSTEM, new StringTextComponent("Error parsing command: " + e.getMessage()));
-            mc.ingameGUI.addChatMessage(ChatType.SYSTEM, new StringTextComponent("Usage: /dumpmodel held|target|item <item>|block <block>" + e.getMessage()));
+            mc.ingameGUI.func_238450_a_(ChatType.SYSTEM, new StringTextComponent("Error parsing command: " + e.getMessage()), Util.DUMMY_UUID);
+            mc.ingameGUI.func_238450_a_(ChatType.SYSTEM, new StringTextComponent("Usage: /dumpmodel held|target|item <item>|block <block>" + e.getMessage()), Util.DUMMY_UUID);
         }
     }
 
-    private static int dumpHeldItem()
+    private static int dumpHeldItem(Hand hand)
     {
         Minecraft mc = Minecraft.getInstance();
-        ItemStack held = Objects.requireNonNull(mc.player).getHeldItemMainhand();
+        ItemStack held = Objects.requireNonNull(mc.player).getHeldItem(hand);
         if (held.getCount() <= 0)
         {
-            mc.ingameGUI.addChatMessage(ChatType.SYSTEM, new StringTextComponent("You must be holding an item in your main hand to use the 'held' subcommand."));
+            mc.ingameGUI.func_238450_a_(ChatType.SYSTEM, new StringTextComponent("You must be holding an item in your "+hand+" to use this command."), Util.DUMMY_UUID);
             return 0;
         }
 
@@ -127,7 +140,7 @@ public class ClientStuffs
         Minecraft mc = Minecraft.getInstance();
         if (mc.objectMouseOver == null || (mc.objectMouseOver.getType() != RayTraceResult.Type.BLOCK && mc.objectMouseOver.getType() != RayTraceResult.Type.ENTITY))
         {
-            mc.ingameGUI.addChatMessage(ChatType.SYSTEM, new StringTextComponent("You must be looking at a block or entity to use the 'target' subcommand."));
+            mc.ingameGUI.func_238450_a_(ChatType.SYSTEM, new StringTextComponent("You must be looking at a block or entity to use the 'target' subcommand."), Util.DUMMY_UUID);
             return 0;
         }
 
@@ -169,9 +182,9 @@ public class ClientStuffs
 
         if (model.isBuiltInRenderer())
         {
-            VertexDumper dumper = new VertexDumper();
+            VertexDumper dumper = new VertexDumper(OBJBuilder.begin());
             stack.getItem().getItemStackTileEntityRenderer()
-                    .render(stack, new MatrixStack(), dumper, 0x00F000F0, OverlayTexture.NO_OVERLAY);
+                    .func_239207_a_(stack, ItemCameraTransforms.TransformType.FIXED, new MatrixStack(), dumper, 0x00F000F0, OverlayTexture.NO_OVERLAY);
 
             return dumpVertexDumper(regName.toString(), mc, dumper, folder, file);
         }
@@ -200,7 +213,7 @@ public class ClientStuffs
                 .resolve(regName.getNamespace());
         Path file = folder.resolve(regName.getPath() + ".obj");
 
-        VertexDumper dumper = new VertexDumper();
+        VertexDumper dumper = new VertexDumper(OBJBuilder.begin());
         IBakedModel model = mc.getBlockRendererDispatcher().getBlockModelShapes().getModel(state);
         switch(state.getRenderType())
         {
@@ -219,21 +232,30 @@ public class ClientStuffs
                         TileEntityRenderer<TileEntity> ter = TileEntityRendererDispatcher.instance.getRenderer(te);
                         if (ter == null)
                         {
-                            mc.ingameGUI.addChatMessage(ChatType.SYSTEM, new StringTextComponent("The block needs a builtin renderer but there is no TileEntity Renderer."));
-                            return 0;
+                            if (state.getRenderType() == BlockRenderType.ENTITYBLOCK_ANIMATED)
+                            {
+                                mc.ingameGUI.func_238450_a_(ChatType.SYSTEM, new StringTextComponent("The block needs a builtin renderer but there is no TileEntity Renderer."), Util.DUMMY_UUID);
+                                return 0;
+                            }
                         }
                         ter.render(te, mc.getRenderPartialTicks(), new MatrixStack(), dumper, 0x00F000F0, OverlayTexture.NO_OVERLAY);
                     }
                     else if (model.isBuiltInRenderer())
                     {
-                        mc.ingameGUI.addChatMessage(ChatType.SYSTEM, new StringTextComponent("The block needs a builtin renderer but there is no TileEntity."));
-                        return 0;
+                        if (state.getRenderType() == BlockRenderType.ENTITYBLOCK_ANIMATED)
+                        {
+                            mc.ingameGUI.func_238450_a_(ChatType.SYSTEM, new StringTextComponent("The block needs a builtin renderer but there is no TileEntity."), Util.DUMMY_UUID);
+                            return 0;
+                        }
                     }
                 }
                 else if (model.isBuiltInRenderer())
                 {
-                    mc.ingameGUI.addChatMessage(ChatType.SYSTEM, new StringTextComponent("The block needs a builtin renderer but I have no BlockPos context."));
-                    return 0;
+                    if (state.getRenderType() == BlockRenderType.ENTITYBLOCK_ANIMATED)
+                    {
+                        mc.ingameGUI.func_238450_a_(ChatType.SYSTEM, new StringTextComponent("The block needs a builtin renderer but I have no BlockPos context."), Util.DUMMY_UUID);
+                        return 0;
+                    }
                 }
                 break;
         }
@@ -248,7 +270,7 @@ public class ClientStuffs
             if (mc.player == null || mc.world == null)
                 return 0;
 
-            VertexDumper dumper = new VertexDumper();
+            VertexDumper dumper = new VertexDumper(OBJBuilder.begin());
 
             if (entity instanceof EnderDragonPartEntity)
             {
@@ -306,7 +328,7 @@ public class ClientStuffs
 
         //noinspection ResultOfMethodCallIgnored
         outFolder.mkdirs();
-        DumpBakedModel.dumpToOBJ(outFile, "item", model, state, data);
+        Utils.dumpToOBJ(outFile, "item", model, state, data);
 
         showSuccessMessage(mc, outFolder, outFile);
         return 1;
@@ -314,13 +336,14 @@ public class ClientStuffs
 
     private static void showSuccessMessage(Minecraft mc, File outFolder, File outFile)
     {
-        StringTextComponent pathComponent = new StringTextComponent(outFile.getAbsolutePath());
-        pathComponent.applyTextStyles(TextFormatting.UNDERLINE,TextFormatting.BOLD);
-        pathComponent.applyTextStyle(style -> {
+        IFormattableTextComponent pathComponent = new StringTextComponent(outFile.getAbsolutePath());
+        pathComponent = pathComponent.mergeStyle(TextFormatting.UNDERLINE,TextFormatting.BOLD);
+        pathComponent = pathComponent.modifyStyle(style -> {
             style.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new StringTextComponent("Click to open folder")));
             style.setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_FILE, outFolder.getAbsolutePath()));
+            return style;
         });
-        mc.ingameGUI.addChatMessage(ChatType.SYSTEM, new StringTextComponent("Model dumped to ").appendSibling(pathComponent));
+        mc.ingameGUI.func_238450_a_(ChatType.SYSTEM, new StringTextComponent("Model dumped to ").append(pathComponent), Util.DUMMY_UUID);
     }
 
     private static class ClientCommandSource implements ICommandSource
@@ -328,9 +351,9 @@ public class ClientStuffs
         final Minecraft mc = Minecraft.getInstance();
 
         @Override
-        public void sendMessage(ITextComponent component)
+        public void sendMessage(ITextComponent component, UUID senderUUID)
         {
-            mc.ingameGUI.addChatMessage(ChatType.SYSTEM, component);
+            mc.ingameGUI.func_238450_a_(ChatType.SYSTEM, component, Util.DUMMY_UUID);
         }
 
         @Override

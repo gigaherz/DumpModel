@@ -1,11 +1,10 @@
 buildscript {
     repositories {
-        maven { url = 'https://files.minecraftforge.net/maven' }
-        jcenter()
+        maven { url = 'https://maven.minecraftforge.net/' }
         mavenCentral()
     }
     dependencies {
-        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '3.+', changing: true
+        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '4.+', changing: true
     }
 }
 apply plugin: 'net.minecraftforge.gradle'
@@ -19,7 +18,7 @@ archivesBaseName = 'DumpModel-1.15.2'
 sourceCompatibility = targetCompatibility = compileJava.sourceCompatibility = compileJava.targetCompatibility = '1.8' // Need this here so eclipse task generates correctly.
 
 minecraft {
-    mappings channel: 'snapshot', version: '20200514-1.15.1'
+    mappings channel: 'snapshot', version: '20201028-1.16.3'
     
     // accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
 
@@ -49,29 +48,11 @@ minecraft {
                 }
             }
         }
-
-        data {
-            workingDirectory project.file('run')
-
-            // Recommended logging data for a userdev environment
-            property 'forge.logging.markers', 'SCAN,REGISTRIES,REGISTRYDUMP'
-
-            // Recommended logging level for the console
-            property 'forge.logging.console.level', 'debug'
-
-            args '--mod', 'thismod', '--all', '--output', file('src/generated/resources/')
-
-            mods {
-                thismod {
-                    source sourceSets.main
-                }
-            }
-        }
     }
 }
 
 dependencies {
-    minecraft 'net.minecraftforge:forge:1.15.2-31.2.5'
+    minecraft 'net.minecraftforge:forge:1.16.5-36.1.23'
 }
 
 jar {
