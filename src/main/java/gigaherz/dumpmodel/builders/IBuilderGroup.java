@@ -1,6 +1,6 @@
 package gigaherz.dumpmodel.builders;
 
-import net.minecraft.client.renderer.model.BakedQuad;
+import net.minecraft.client.renderer.block.model.BakedQuad;
 
 public interface IBuilderGroup<
         B extends IBuilder<B, P, G, F, V>,
@@ -10,6 +10,8 @@ public interface IBuilderGroup<
         V extends IBuilderVertex<B, P, G, F, V>>
 {
     G addQuad(BakedQuad quad);
+
     F face();
+
     P end();
 }

@@ -1,16 +1,15 @@
 package gigaherz.dumpmodel.builders;
 
-import com.google.common.collect.Lists;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+import com.mojang.blaze3d.vertex.VertexFormat;
+import com.mojang.blaze3d.vertex.VertexFormatElement;
 import gigaherz.dumpmodel.Utils;
-import net.minecraft.client.renderer.model.BakedQuad;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
-import net.minecraft.client.renderer.vertex.VertexFormat;
-import net.minecraft.client.renderer.vertex.VertexFormatElement;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.nbt.CompressedStreamTools;
-import net.minecraft.nbt.IntNBT;
-import net.minecraft.nbt.ListNBT;
-import net.minecraft.util.Direction;
+import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.IntTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.NbtIo;
 
 import javax.annotation.Nullable;
 import java.io.File;
@@ -20,7 +19,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class BOBBuilder implements IBuilder<BOBBuilder, BOBBuilder.Part, BOBBuilder.Part.Group, BOBBuilder.Part.Group.Face, BOBBuilder.Part.Group.Face.Vertex>
+public class BOBBuilder
+        implements IBuilder<BOBBuilder, BOBBuilder.Part, BOBBuilder.Part.Group, BOBBuilder.Part.Group.Face, BOBBuilder.Part.Group.Face.Vertex>
 {
     public static BOBBuilder begin()
     {
@@ -28,31 +28,31 @@ public class BOBBuilder implements IBuilder<BOBBuilder, BOBBuilder.Part, BOBBuil
     }
 
     private final List<VertexFormatElement> elements = new ArrayList<>();
-    private final Map<VertexFormatElement, ListNBT> elementLists = new HashMap<>();
-    private final CompoundNBT data = new CompoundNBT();
-    private final CompoundNBT meta;
-    private final CompoundNBT materials;
-    private final ListNBT parts;
-    private final ListNBT lists;
+    private final Map<VertexFormatElement, ListTag> elementLists = new HashMap<>();
+    private final CompoundTag data = new CompoundTag();
+    private final CompoundTag meta;
+    private final CompoundTag materials;
+    private final ListTag parts;
+    private final ListTag lists;
 
     private BOBBuilder()
     {
 
-        this.meta = new CompoundNBT();
+        this.meta = new CompoundTag();
         data.put("meta", meta); // TODO
 
-        this.materials = new CompoundNBT();
+        this.materials = new CompoundTag();
         data.put("materials", materials);
 
-        this.lists = new ListNBT();
+        this.lists = new ListTag();
         data.put("lists", lists);
 
-        this.parts = new ListNBT();
+        this.parts = new ListTag();
         data.put("parts", parts);
 
-        defineElement("v", DefaultVertexFormats.POSITION_3F);
-        defineElement("vt", DefaultVertexFormats.TEX_2F);
-        defineElement("vn", DefaultVertexFormats.NORMAL_3B);
+        defineElement("v", DefaultVertexFormat.ELEMENT_POSITION);
+        defineElement("vt", DefaultVertexFormat.ELEMENT_UV0);
+        defineElement("vn", DefaultVertexFormat.ELEMENT_NORMAL);
     }
 
     private void defineElement(String id, VertexFormatElement element)
@@ -61,22 +61,22 @@ public class BOBBuilder implements IBuilder<BOBBuilder, BOBBuilder.Part, BOBBuil
         elementLists.put(element, createElementList(id));
     }
 
-    private ListNBT getOrCreateElementList(VertexFormatElement element)
+    private ListTag getOrCreateElementList(VertexFormatElement element)
     {
         return elementLists.computeIfAbsent(element, e ->
         {
             elements.add(e);
-            String ename = e.getUsage().getDisplayName().replace(" ", "");
+            String ename = e.getUsage().getName().replace(" ", "");
             if (e.getIndex() != 0)
                 ename += e.getIndex();
             return createElementList(ename);
         });
     }
 
-    private ListNBT createElementList(String id)
+    private ListTag createElementList(String id)
     {
-        ListNBT list = new ListNBT();
-        CompoundNBT listData = new CompoundNBT();
+        ListTag list = new ListTag();
+        CompoundTag listData = new CompoundTag();
         listData.putString("id", id);
         listData.put("v", list);
         lists.add(listData);
@@ -86,7 +86,7 @@ public class BOBBuilder implements IBuilder<BOBBuilder, BOBBuilder.Part, BOBBuil
     @Override
     public Part part(String name)
     {
-        CompoundNBT part = new CompoundNBT();
+        CompoundTag part = new CompoundTag();
         parts.add(part);
         return new Part(part, name);
     }
@@ -96,7 +96,7 @@ public class BOBBuilder implements IBuilder<BOBBuilder, BOBBuilder.Part, BOBBuil
     {
         try
         {
-            CompressedStreamTools.write(data, file);
+            NbtIo.write(data, file);
         }
         catch (IOException e)
         {
@@ -109,7 +109,7 @@ public class BOBBuilder implements IBuilder<BOBBuilder, BOBBuilder.Part, BOBBuil
     {
         try
         {
-            CompressedStreamTools.writeCompressed(data, file);
+            NbtIo.writeCompressed(data, file);
         }
         catch (IOException e)
         {
@@ -118,14 +118,15 @@ public class BOBBuilder implements IBuilder<BOBBuilder, BOBBuilder.Part, BOBBuil
         }
     }
 
-    public class Part implements IBuilderPart<BOBBuilder, BOBBuilder.Part, BOBBuilder.Part.Group, BOBBuilder.Part.Group.Face, BOBBuilder.Part.Group.Face.Vertex>
+    public class Part
+            implements IBuilderPart<BOBBuilder, BOBBuilder.Part, BOBBuilder.Part.Group, BOBBuilder.Part.Group.Face, BOBBuilder.Part.Group.Face.Vertex>
     {
-        private final ListNBT groups;
+        private final ListTag groups;
 
-        private Part(CompoundNBT part, String name)
+        private Part(CompoundTag part, String name)
         {
             part.putString("n", name);
-            this.groups = new ListNBT();
+            this.groups = new ListTag();
             part.put("g", groups);
         }
 
@@ -138,7 +139,7 @@ public class BOBBuilder implements IBuilder<BOBBuilder, BOBBuilder.Part, BOBBuil
         @Override
         public Group group(String name, @Nullable Direction side)
         {
-            CompoundNBT group = new CompoundNBT();
+            CompoundTag group = new CompoundTag();
             groups.add(group);
             return new Group(group, name, side);
         }
@@ -149,27 +150,28 @@ public class BOBBuilder implements IBuilder<BOBBuilder, BOBBuilder.Part, BOBBuil
             return BOBBuilder.this;
         }
 
-        public class Group implements IBuilderGroup<BOBBuilder, BOBBuilder.Part, BOBBuilder.Part.Group, BOBBuilder.Part.Group.Face, BOBBuilder.Part.Group.Face.Vertex>
+        public class Group
+                implements IBuilderGroup<BOBBuilder, BOBBuilder.Part, BOBBuilder.Part.Group, BOBBuilder.Part.Group.Face, BOBBuilder.Part.Group.Face.Vertex>
         {
-            private final ListNBT faces;
+            private final ListTag faces;
 
-            public Group(CompoundNBT group, String name, @Nullable Direction side)
+            public Group(CompoundTag group, String name, @Nullable Direction side)
             {
                 group.putString("n", name);
                 group.putInt("d", side == null ? -1 : side.ordinal());
 
-                this.faces = new ListNBT();
+                this.faces = new ListTag();
                 group.put("f", faces);
             }
 
             @Override
             public Group addQuad(BakedQuad quad)
             {
-                VertexFormat fmt = DefaultVertexFormats.BLOCK;
-                int[] vdata = quad.getVertexData();
+                VertexFormat fmt = DefaultVertexFormat.BLOCK;
+                int[] vdata = quad.getVertices();
                 int byteStart = 0;
                 Face face = face();
-                for(int i=0;i<4;i++)
+                for (int i = 0; i < 4; i++)
                 {
                     Face.Vertex vertex = face.vertex();
                     for (VertexFormatElement element : fmt.getElements())
@@ -189,7 +191,7 @@ public class BOBBuilder implements IBuilder<BOBBuilder, BOBBuilder.Part, BOBBuil
             @Override
             public Face face()
             {
-                ListNBT face = new ListNBT();
+                ListTag face = new ListTag();
                 faces.add(face);
                 return new Face(face);
             }
@@ -200,13 +202,14 @@ public class BOBBuilder implements IBuilder<BOBBuilder, BOBBuilder.Part, BOBBuil
                 return Part.this;
             }
 
-            public class Face implements IBuilderFace<BOBBuilder, BOBBuilder.Part, BOBBuilder.Part.Group, BOBBuilder.Part.Group.Face, BOBBuilder.Part.Group.Face.Vertex>
+            public class Face
+                    implements IBuilderFace<BOBBuilder, BOBBuilder.Part, BOBBuilder.Part.Group, BOBBuilder.Part.Group.Face, BOBBuilder.Part.Group.Face.Vertex>
             {
-                private final ListNBT vertices;
+                private final ListTag vertices;
 
-                public Face(ListNBT face)
+                public Face(ListTag face)
                 {
-                    this.vertices = new ListNBT();
+                    this.vertices = new ListTag();
                     face.add(vertices);
                 }
 
@@ -222,26 +225,27 @@ public class BOBBuilder implements IBuilder<BOBBuilder, BOBBuilder.Part, BOBBuil
                     return Group.this;
                 }
 
-                public class Vertex implements IBuilderVertex<BOBBuilder, BOBBuilder.Part, BOBBuilder.Part.Group, BOBBuilder.Part.Group.Face, BOBBuilder.Part.Group.Face.Vertex>
+                public class Vertex
+                        implements IBuilderVertex<BOBBuilder, BOBBuilder.Part, BOBBuilder.Part.Group, BOBBuilder.Part.Group.Face, BOBBuilder.Part.Group.Face.Vertex>
                 {
                     private final Map<VertexFormatElement, Integer> indices0 = new HashMap<>();
 
                     @Override
                     public Vertex position(float x, float y, float z)
                     {
-                         return element(DefaultVertexFormats.POSITION_3F, x, y, z);
+                        return element(DefaultVertexFormat.ELEMENT_POSITION, x, y, z);
                     }
 
                     @Override
                     public Vertex tex(float u, float v)
                     {
-                        return element(DefaultVertexFormats.TEX_2F, u, v);
+                        return element(DefaultVertexFormat.ELEMENT_UV0, u, v);
                     }
 
                     @Override
                     public Vertex normal(float x, float y, float z)
                     {
-                        return element(DefaultVertexFormats.NORMAL_3B, x, y, z);
+                        return element(DefaultVertexFormat.ELEMENT_NORMAL, x, y, z);
                     }
 
                     @Override
@@ -250,7 +254,7 @@ public class BOBBuilder implements IBuilder<BOBBuilder, BOBBuilder.Part, BOBBuil
                         if (indices0.containsKey(element))
                             throw new IllegalStateException("This element has already been assigned!");
 
-                        ListNBT list = getOrCreateElementList(element);
+                        ListTag list = getOrCreateElementList(element);
 
                         indices0.put(element, list.size());
                         list.add(Utils.listOf(values));
@@ -265,19 +269,19 @@ public class BOBBuilder implements IBuilder<BOBBuilder, BOBBuilder.Part, BOBBuil
                         return Face.this;
                     }
 
-                    private ListNBT formatIndices()
+                    private ListTag formatIndices()
                     {
-                        ListNBT t = new ListNBT();
+                        ListTag t = new ListTag();
                         for (VertexFormatElement element : elements)
                         {
                             Integer b = indices0.get(element);
                             if (b != null)
                             {
-                                t.add(IntNBT.valueOf(b));
+                                t.add(IntTag.valueOf(b));
                             }
                             else
                             {
-                                t.add(IntNBT.valueOf(-1));
+                                t.add(IntTag.valueOf(-1));
                             }
                         }
                         return t;

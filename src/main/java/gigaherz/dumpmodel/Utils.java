@@ -1,14 +1,14 @@
 package gigaherz.dumpmodel;
 
+import com.mojang.blaze3d.vertex.VertexFormatElement;
 import gigaherz.dumpmodel.builders.BOBBuilder;
 import gigaherz.dumpmodel.builders.OBJBuilder;
-import net.minecraft.block.BlockState;
-import net.minecraft.client.renderer.model.BakedQuad;
-import net.minecraft.client.renderer.model.IBakedModel;
-import net.minecraft.client.renderer.vertex.VertexFormatElement;
-import net.minecraft.nbt.FloatNBT;
-import net.minecraft.nbt.ListNBT;
-import net.minecraft.util.Direction;
+import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.core.Direction;
+import net.minecraft.nbt.FloatTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.client.model.data.IModelData;
 
 import javax.annotation.Nullable;
@@ -22,7 +22,7 @@ public class Utils
             null, Direction.EAST, Direction.WEST, Direction.NORTH, Direction.SOUTH, Direction.UP, Direction.DOWN
     };
 
-    public static void dumpToOBJ(File file, String name, IBakedModel model, @Nullable BlockState state, IModelData modelData)
+    public static void dumpToOBJ(File file, String name, BakedModel model, @Nullable BlockState state, IModelData modelData)
     {
         OBJBuilder builder = OBJBuilder.begin();
 
@@ -41,7 +41,7 @@ public class Utils
         builder.save(file);
     }
 
-    public static void dumpToBOB(File file, String name, IBakedModel model, @Nullable BlockState state, IModelData modelData)
+    public static void dumpToBOB(File file, String name, BakedModel model, @Nullable BlockState state, IModelData modelData)
     {
         BOBBuilder builder = BOBBuilder.begin();
 
@@ -177,12 +177,12 @@ public class Utils
         return floats;
     }
 
-    public static ListNBT listOf(double... floats)
+    public static ListTag listOf(double... floats)
     {
-        ListNBT ret = new ListNBT();
-        for(double v : floats)
+        ListTag ret = new ListTag();
+        for (double v : floats)
         {
-            ret.add(FloatNBT.valueOf((float)v));
+            ret.add(FloatTag.valueOf((float) v));
         }
         return ret;
     }

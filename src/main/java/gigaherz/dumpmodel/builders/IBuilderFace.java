@@ -8,5 +8,6 @@ public interface IBuilderFace<
         V extends IBuilderVertex<B, P, G, F, V>>
 {
     V vertex();
+
     G end();
 }

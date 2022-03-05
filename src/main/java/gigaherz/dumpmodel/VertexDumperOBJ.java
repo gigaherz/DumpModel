@@ -1,26 +1,22 @@
 package gigaherz.dumpmodel;
 
 import com.google.common.collect.Lists;
-import com.mojang.blaze3d.vertex.IVertexBuilder;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.blaze3d.vertex.VertexFormat;
+import com.mojang.blaze3d.vertex.VertexFormatElement;
 import com.mojang.datafixers.util.Pair;
-import net.minecraft.client.renderer.IRenderTypeBuffer;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.vertex.VertexFormat;
-import net.minecraft.client.renderer.vertex.VertexFormatElement;
-import net.minecraft.util.math.vector.Vector2f;
-import net.minecraft.util.math.vector.Vector3d;
-import net.minecraft.util.math.vector.Vector3f;
-import org.lwjgl.opengl.GL11;
 
 import java.io.*;
 import java.util.List;
 
-public class VertexDumperOBJ implements IRenderTypeBuffer
+public class VertexDumperOBJ implements MultiBufferSource
 {
     public List<Pair<RenderType, VertexAccumulator>> parts = Lists.newArrayList();
 
     @Override
-    public IVertexBuilder getBuffer(RenderType rt)
+    public VertexConsumer getBuffer(RenderType rt)
     {
         VertexAccumulator acc = new VertexAccumulator();
         parts.add(Pair.of(rt, acc));
@@ -45,12 +41,12 @@ public class VertexDumperOBJ implements IRenderTypeBuffer
                 VertexAccumulator acc = part.getSecond();
                 writer.write(String.format("g %s_%s\n", rt.toString(), ++partNumber));
 
-                VertexFormat fmt = rt.getVertexFormat();
-                int drawMode = rt.getDrawMode();
+                VertexFormat fmt = rt.format();
+                VertexFormat.Mode drawMode = rt.mode();
                 int verticesPerElement;
-                if (drawMode == GL11.GL_QUADS)
+                if (drawMode == VertexFormat.Mode.QUADS)
                     verticesPerElement = 4;
-                else if (drawMode == GL11.GL_TRIANGLES)
+                else if (drawMode == VertexFormat.Mode.TRIANGLES)
                     verticesPerElement = 3;
                 else
                     throw new RuntimeException(String.format("Unsupported GL drawing mode %s", drawMode));
@@ -70,7 +66,7 @@ public class VertexDumperOBJ implements IRenderTypeBuffer
                             switch (element.getUsage())
                             {
                                 case POSITION:
-                                    writer.write(String.format("v %s %s %s\n", data.pos.x,data.pos.y,data.pos.z));
+                                    writer.write(String.format("v %s %s %s\n", data.pos.x, data.pos.y, data.pos.z));
                                     indices.get(i).add(++lastPos);
                                     break;
                                 case UV:
@@ -86,7 +82,7 @@ public class VertexDumperOBJ implements IRenderTypeBuffer
                                     }
                                     break;
                                 case NORMAL:
-                                    writer.write(String.format("vn %s %s %s\n", data.normal.getX(),data.normal.getY(),data.normal.getZ()));
+                                    writer.write(String.format("vn %s %s %s\n", data.normal.x(), data.normal.y(), data.normal.z()));
                                     indices.get(i).add(++lastNorm);
                                     break;
                                 case COLOR:
@@ -116,8 +112,8 @@ public class VertexDumperOBJ implements IRenderTypeBuffer
                                     formatIndices(indices.get(3), hasTex)
                             ));
                         }
-                        for(int j=0;j<4;j++)
-                            indices.get(j).clear();
+                        for (int j = 0; j < 4; j++)
+                        {indices.get(j).clear();}
                         i = 0;
                     }
                 }
@@ -141,98 +137,5 @@ public class VertexDumperOBJ implements IRenderTypeBuffer
         if (indices.size() >= 3)
             return String.format("%d/%d/%d", indices.get(0), indices.get(1), indices.get(2));
         return "1";
-    }
-
-    private class VertexAccumulator implements IVertexBuilder
-    {
-        public final List<VertexData> vertices = Lists.newArrayList();
-        private VertexData current = new VertexData();
-
-        @Override
-        public IVertexBuilder pos(double x, double y, double z)
-        {
-            current.pos(x,y,z);
-            return this;
-        }
-
-        @Override
-        public IVertexBuilder color(int red, int green, int blue, int alpha)
-        {
-            current.color(red,green,blue,alpha);
-            return this;
-        }
-
-        @Override
-        public IVertexBuilder tex(float u, float v)
-        {
-            current.tex(u,v);
-            return this;
-        }
-
-        @Override
-        public IVertexBuilder overlay(int u, int v)
-        {
-            current.overlay(u,v);
-            return this;
-        }
-
-        @Override
-        public IVertexBuilder lightmap(int u, int v)
-        {
-            current.lightmap(u,v);
-            return this;
-        }
-
-        @Override
-        public IVertexBuilder normal(float x, float y, float z)
-        {
-            current.normal(x,y,z);
-            return this;
-        }
-
-        @Override
-        public void endVertex()
-        {
-            vertices.add(current);
-            current = new VertexData();
-        }
-
-        private class VertexData
-        {
-            public Vector3d pos;
-            public float[] color;
-            public Vector2f[] uv = new Vector2f[3];
-            public Vector3f normal;
-
-            public void pos(double x, double y, double z)
-            {
-                this.pos = new Vector3d(x,y,z);
-            }
-
-            public void color(int red, int green, int blue, int alpha)
-            {
-                this.color = new float[]{red,green,blue,alpha};
-            }
-
-            public void tex(float u, float v)
-            {
-                this.uv[0] = new Vector2f(u,v);
-            }
-
-            public void overlay(int u, int v)
-            {
-                this.uv[1] = new Vector2f(u,v);
-            }
-
-            public void lightmap(int u, int v)
-            {
-                this.uv[2] = new Vector2f(u, v);
-            }
-
-            public void normal(float x, float y, float z)
-            {
-                this.normal = new Vector3f(x,y,z);
-            }
-        }
     }
 }

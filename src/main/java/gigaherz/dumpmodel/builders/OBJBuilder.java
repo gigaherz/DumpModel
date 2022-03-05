@@ -1,19 +1,20 @@
 package gigaherz.dumpmodel.builders;
 
 import com.google.common.collect.Lists;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+import com.mojang.blaze3d.vertex.VertexFormat;
+import com.mojang.blaze3d.vertex.VertexFormatElement;
 import gigaherz.dumpmodel.Utils;
-import net.minecraft.client.renderer.model.BakedQuad;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
-import net.minecraft.client.renderer.vertex.VertexFormat;
-import net.minecraft.client.renderer.vertex.VertexFormatElement;
-import net.minecraft.util.Direction;
+import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.core.Direction;
 
 import javax.annotation.Nullable;
 import java.io.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class OBJBuilder implements IBuilder<OBJBuilder, OBJBuilder.Part, OBJBuilder.Part.Group, OBJBuilder.Part.Group.Face, OBJBuilder.Part.Group.Face.Vertex>
+public class OBJBuilder
+        implements IBuilder<OBJBuilder, OBJBuilder.Part, OBJBuilder.Part.Group, OBJBuilder.Part.Group.Face, OBJBuilder.Part.Group.Face.Vertex>
 {
     public static OBJBuilder begin()
     {
@@ -27,12 +28,12 @@ public class OBJBuilder implements IBuilder<OBJBuilder, OBJBuilder.Part, OBJBuil
 
     private OBJBuilder()
     {
-        defineElement("v", DefaultVertexFormats.POSITION_3F, true);
-        defineElement("vt", DefaultVertexFormats.TEX_2F, true);
-        defineElement("vt1", DefaultVertexFormats.TEX_2S, false);
-        defineElement("vt2", DefaultVertexFormats.TEX_2SB, false);
-        defineElement("vn", DefaultVertexFormats.NORMAL_3B, true);
-        defineElement("vc", DefaultVertexFormats.COLOR_4UB, false);
+        defineElement("v", DefaultVertexFormat.ELEMENT_POSITION, true);
+        defineElement("vt", DefaultVertexFormat.ELEMENT_UV0, true);
+        defineElement("vt1", DefaultVertexFormat.ELEMENT_UV1, false);
+        defineElement("vt2", DefaultVertexFormat.ELEMENT_UV2, false);
+        defineElement("vn", DefaultVertexFormat.ELEMENT_NORMAL, true);
+        defineElement("vc", DefaultVertexFormat.ELEMENT_COLOR, false);
     }
 
     private void defineElement(String id, VertexFormatElement element, boolean isStandard)
@@ -45,7 +46,7 @@ public class OBJBuilder implements IBuilder<OBJBuilder, OBJBuilder.Part, OBJBuil
     {
         return elementPrefixes.computeIfAbsent(element, e ->
         {
-            String ename = e.getUsage().getDisplayName().replace(" ", "");
+            String ename = e.getUsage().getName().replace(" ", "");
             if (e.getIndex() != 0)
                 ename += e.getIndex();
             return ename;
@@ -59,10 +60,10 @@ public class OBJBuilder implements IBuilder<OBJBuilder, OBJBuilder.Part, OBJBuil
 
     public void save(File file)
     {
-        try(OutputStream output = new FileOutputStream(file);
-            OutputStreamWriter writer = new OutputStreamWriter(output))
+        try (OutputStream output = new FileOutputStream(file);
+             OutputStreamWriter writer = new OutputStreamWriter(output))
         {
-            writer.write(String.join("\n",lines));
+            writer.write(String.join("\n", lines));
         }
         catch (IOException e)
         {
@@ -71,7 +72,8 @@ public class OBJBuilder implements IBuilder<OBJBuilder, OBJBuilder.Part, OBJBuil
         }
     }
 
-    public class Part implements IBuilderPart<OBJBuilder, OBJBuilder.Part, OBJBuilder.Part.Group, OBJBuilder.Part.Group.Face, OBJBuilder.Part.Group.Face.Vertex>
+    public class Part
+            implements IBuilderPart<OBJBuilder, OBJBuilder.Part, OBJBuilder.Part.Group, OBJBuilder.Part.Group.Face, OBJBuilder.Part.Group.Face.Vertex>
     {
         private Part(String name)
         {
@@ -93,7 +95,8 @@ public class OBJBuilder implements IBuilder<OBJBuilder, OBJBuilder.Part, OBJBuil
             return OBJBuilder.this;
         }
 
-        public class Group implements IBuilderGroup<OBJBuilder, OBJBuilder.Part, OBJBuilder.Part.Group, OBJBuilder.Part.Group.Face, OBJBuilder.Part.Group.Face.Vertex>
+        public class Group
+                implements IBuilderGroup<OBJBuilder, OBJBuilder.Part, OBJBuilder.Part.Group, OBJBuilder.Part.Group.Face, OBJBuilder.Part.Group.Face.Vertex>
         {
             public Group(String name, @Nullable Direction side)
             {
@@ -104,11 +107,11 @@ public class OBJBuilder implements IBuilder<OBJBuilder, OBJBuilder.Part, OBJBuil
 
             public Group addQuad(BakedQuad quad)
             {
-                VertexFormat fmt = DefaultVertexFormats.BLOCK;
-                int[] vdata = quad.getVertexData();
+                VertexFormat fmt = DefaultVertexFormat.BLOCK;
+                int[] vdata = quad.getVertices();
                 int byteStart = 0;
                 Face face = face();
-                for(int i=0;i<4;i++)
+                for (int i = 0; i < 4; i++)
                 {
                     Face.Vertex vertex = face.vertex();
                     for (VertexFormatElement element : fmt.getElements())
@@ -135,7 +138,8 @@ public class OBJBuilder implements IBuilder<OBJBuilder, OBJBuilder.Part, OBJBuil
                 return Part.this;
             }
 
-            public class Face implements IBuilderFace<OBJBuilder, OBJBuilder.Part, OBJBuilder.Part.Group, OBJBuilder.Part.Group.Face, OBJBuilder.Part.Group.Face.Vertex>
+            public class Face
+                    implements IBuilderFace<OBJBuilder, OBJBuilder.Part, OBJBuilder.Part.Group, OBJBuilder.Part.Group.Face, OBJBuilder.Part.Group.Face.Vertex>
             {
                 List<Map<VertexFormatElement, Integer>> indices = Lists.newArrayList();
                 List<String> vertices = Lists.newArrayList();
@@ -154,14 +158,15 @@ public class OBJBuilder implements IBuilder<OBJBuilder, OBJBuilder.Part, OBJBuil
 
                 public Group end()
                 {
-                    if(vertices.size() > 0)
+                    if (vertices.size() > 0)
                     {
                         lines.add("f " + String.join(" ", vertices));
                     }
                     return Group.this;
                 }
 
-                public class Vertex implements IBuilderVertex<OBJBuilder, OBJBuilder.Part, OBJBuilder.Part.Group, OBJBuilder.Part.Group.Face, OBJBuilder.Part.Group.Face.Vertex>
+                public class Vertex
+                        implements IBuilderVertex<OBJBuilder, OBJBuilder.Part, OBJBuilder.Part.Group, OBJBuilder.Part.Group.Face, OBJBuilder.Part.Group.Face.Vertex>
                 {
                     private final Map<VertexFormatElement, Integer> indices0;
 
@@ -172,17 +177,17 @@ public class OBJBuilder implements IBuilder<OBJBuilder, OBJBuilder.Part, OBJBuil
 
                     public Vertex position(float x, float y, float z)
                     {
-                        return element(DefaultVertexFormats.POSITION_3F, x, y, z);
+                        return element(DefaultVertexFormat.ELEMENT_POSITION, x, y, z);
                     }
 
                     public Vertex tex(float u, float v)
                     {
-                        return element(DefaultVertexFormats.TEX_2F, u, v);
+                        return element(DefaultVertexFormat.ELEMENT_UV0, u, v);
                     }
 
                     public Vertex normal(float x, float y, float z)
                     {
-                        return element(DefaultVertexFormats.NORMAL_3B, x, y, z);
+                        return element(DefaultVertexFormat.ELEMENT_NORMAL, x, y, z);
                     }
 
                     public Vertex element(VertexFormatElement element, double... values)
@@ -193,7 +198,7 @@ public class OBJBuilder implements IBuilder<OBJBuilder, OBJBuilder.Part, OBJBuil
                         String prefix = getOrCreateElementPrefix(element);
                         lines.add(String.format("%s %s", prefix, Arrays.stream(values).mapToObj(Double::toString).collect(Collectors.joining(" "))));
                         indices0.put(element, elementCounts.getOrDefault(element, 1));
-                        elementCounts.compute(element, (key, val) -> val == null ? 2 : val+1);
+                        elementCounts.compute(element, (key, val) -> val == null ? 2 : val + 1);
                         return this;
                     }
 
