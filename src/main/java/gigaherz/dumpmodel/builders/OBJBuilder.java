@@ -7,6 +7,7 @@ import com.mojang.blaze3d.vertex.VertexFormatElement;
 import gigaherz.dumpmodel.Utils;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.core.Direction;
+import org.apache.commons.io.FilenameUtils;
 
 import javax.annotation.Nullable;
 import java.io.*;
@@ -14,7 +15,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class OBJBuilder
-        implements IBuilder<OBJBuilder, OBJBuilder.Part, OBJBuilder.Part.Group, OBJBuilder.Part.Group.Face, OBJBuilder.Part.Group.Face.Vertex>
+        implements IBuilder<OBJBuilder, OBJBuilder.Part, OBJBuilder.Part.Group, OBJBuilder.Part.Group.Face, OBJBuilder.Part.Group.Face.Vertex, SimpleMaterial>
 {
     public static OBJBuilder begin()
     {
@@ -25,15 +26,16 @@ public class OBJBuilder
     private final Map<VertexFormatElement, String> elementPrefixes = new HashMap<>();
     private final Map<VertexFormatElement, Integer> elementCounts = new HashMap<>();
     private final List<String> lines = new ArrayList<>();
+    private final Map<String, SimpleMaterial> materialLibrary = new HashMap<>();
 
     private OBJBuilder()
     {
         defineElement("v", DefaultVertexFormat.ELEMENT_POSITION, true);
         defineElement("vt", DefaultVertexFormat.ELEMENT_UV0, true);
-        defineElement("vt1", DefaultVertexFormat.ELEMENT_UV1, false);
-        defineElement("vt2", DefaultVertexFormat.ELEMENT_UV2, false);
+        //defineElement("vt1", DefaultVertexFormat.ELEMENT_UV1, false);
+        //defineElement("vt2", DefaultVertexFormat.ELEMENT_UV2, false);
         defineElement("vn", DefaultVertexFormat.ELEMENT_NORMAL, true);
-        defineElement("vc", DefaultVertexFormat.ELEMENT_COLOR, false);
+        //defineElement("vc", DefaultVertexFormat.ELEMENT_COLOR, false);
     }
 
     private void defineElement(String id, VertexFormatElement element, boolean isStandard)
@@ -44,13 +46,14 @@ public class OBJBuilder
 
     private String getOrCreateElementPrefix(VertexFormatElement element)
     {
-        return elementPrefixes.computeIfAbsent(element, e ->
+        return elementPrefixes.get(element);
+        /*return elementPrefixes.computeIfAbsent(element, e ->
         {
             String ename = e.getUsage().getName().replace(" ", "");
             if (e.getIndex() != 0)
                 ename += e.getIndex();
             return ename;
-        });
+        });*/
     }
 
     public Part part(String name)
@@ -60,9 +63,16 @@ public class OBJBuilder
 
     public void save(File file)
     {
+        var pathWithoutExtension = FilenameUtils.removeExtension(file.getAbsolutePath());
+        var matLib = pathWithoutExtension + ".mtl";
+
         try (OutputStream output = new FileOutputStream(file);
              OutputStreamWriter writer = new OutputStreamWriter(output))
         {
+            if (materialLibrary.size() > 0)
+            {
+                writer.write(String.format("mtllib %s\n", matLib));
+            }
             writer.write(String.join("\n", lines));
         }
         catch (IOException e)
@@ -70,14 +80,46 @@ public class OBJBuilder
             e.printStackTrace();
             throw new RuntimeException(e);
         }
+
+        if (materialLibrary.size() > 0)
+        {
+            try (OutputStream output = new FileOutputStream(matLib);
+                 OutputStreamWriter writer = new OutputStreamWriter(output))
+            {
+                for(var mat : materialLibrary.values())
+                {
+                    writer.write(String.format("newmtl %s\n", mat.name()));
+                    if (mat.texture() != null)
+                        writer.write(String.format("map_Kd %s\n", mat.texture()));
+                    if (mat.r() != 1 || mat.g() != 1 || mat.b() != 1 || mat.a() != 1)
+                        writer.write(String.format("Kd %s %s %s %s\n", mat.r(), mat.g(), mat.b(), mat.a()));
+                    writer.write("\n");
+                }
+            }
+            catch (IOException e)
+            {
+                e.printStackTrace();
+                throw new RuntimeException(e);
+            }
+
+        }
+    }
+
+    @Override
+    public SimpleMaterial newMaterial(String tex)
+    {
+        var autoname = "Mat_" + materialLibrary.size();
+        var mat = new SimpleMaterial(autoname, tex, 1,1,1,1);
+        materialLibrary.put(autoname, mat);
+        return mat;
     }
 
     public class Part
-            implements IBuilderPart<OBJBuilder, OBJBuilder.Part, OBJBuilder.Part.Group, OBJBuilder.Part.Group.Face, OBJBuilder.Part.Group.Face.Vertex>
+            implements IBuilderPart<OBJBuilder, OBJBuilder.Part, OBJBuilder.Part.Group, OBJBuilder.Part.Group.Face, OBJBuilder.Part.Group.Face.Vertex, SimpleMaterial>
     {
         private Part(String name)
         {
-            lines.add(String.format("o %s", name));
+            lines.add(String.format("g %s", name));
         }
 
         public Group group(@Nullable Direction side)
@@ -96,13 +138,20 @@ public class OBJBuilder
         }
 
         public class Group
-                implements IBuilderGroup<OBJBuilder, OBJBuilder.Part, OBJBuilder.Part.Group, OBJBuilder.Part.Group.Face, OBJBuilder.Part.Group.Face.Vertex>
+                implements IBuilderGroup<OBJBuilder, OBJBuilder.Part, OBJBuilder.Part.Group, OBJBuilder.Part.Group.Face, OBJBuilder.Part.Group.Face.Vertex, SimpleMaterial>
         {
             public Group(String name, @Nullable Direction side)
             {
-                lines.add(String.format("g %s", name));
+                lines.add(String.format("o %s", name));
                 if (side != null)
-                    lines.add(String.format("g_Side %s", side));
+                    lines.add(String.format("o_Side %s", side));
+            }
+
+            @Override
+            public Group setMaterial(SimpleMaterial mat)
+            {
+                lines.add(String.format("usemtl %s", mat.name()));
+                return this;
             }
 
             public Group addQuad(BakedQuad quad)
@@ -139,7 +188,7 @@ public class OBJBuilder
             }
 
             public class Face
-                    implements IBuilderFace<OBJBuilder, OBJBuilder.Part, OBJBuilder.Part.Group, OBJBuilder.Part.Group.Face, OBJBuilder.Part.Group.Face.Vertex>
+                    implements IBuilderFace<OBJBuilder, OBJBuilder.Part, OBJBuilder.Part.Group, OBJBuilder.Part.Group.Face, OBJBuilder.Part.Group.Face.Vertex, SimpleMaterial>
             {
                 List<Map<VertexFormatElement, Integer>> indices = Lists.newArrayList();
                 List<String> vertices = Lists.newArrayList();
@@ -166,7 +215,7 @@ public class OBJBuilder
                 }
 
                 public class Vertex
-                        implements IBuilderVertex<OBJBuilder, OBJBuilder.Part, OBJBuilder.Part.Group, OBJBuilder.Part.Group.Face, OBJBuilder.Part.Group.Face.Vertex>
+                        implements IBuilderVertex<OBJBuilder, OBJBuilder.Part, OBJBuilder.Part.Group, OBJBuilder.Part.Group.Face, OBJBuilder.Part.Group.Face.Vertex, SimpleMaterial>
                 {
                     private final Map<VertexFormatElement, Integer> indices0;
 
@@ -196,9 +245,12 @@ public class OBJBuilder
                             throw new IllegalStateException("This element has already been assigned!");
 
                         String prefix = getOrCreateElementPrefix(element);
-                        lines.add(String.format("%s %s", prefix, Arrays.stream(values).mapToObj(Double::toString).collect(Collectors.joining(" "))));
-                        indices0.put(element, elementCounts.getOrDefault(element, 1));
-                        elementCounts.compute(element, (key, val) -> val == null ? 2 : val + 1);
+                        if (prefix != null)
+                        {
+                            lines.add(String.format("%s %s", prefix, Arrays.stream(values).mapToObj(Double::toString).collect(Collectors.joining(" "))));
+                            indices0.put(element, elementCounts.getOrDefault(element, 1));
+                            elementCounts.compute(element, (key, val) -> val == null ? 2 : val + 1);
+                        }
                         return this;
                     }
 

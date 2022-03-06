@@ -4,6 +4,8 @@ import com.google.common.collect.Lists;
 import com.mojang.blaze3d.vertex.DefaultedVertexConsumer;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Vector3f;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
 
@@ -13,6 +15,10 @@ public class VertexAccumulator extends DefaultedVertexConsumer implements Vertex
 {
     public final List<VertexData> vertices = Lists.newArrayList();
     private VertexData current = new VertexData();
+
+    public VertexAccumulator()
+    {
+    }
 
     @Override
     public VertexConsumer vertex(double x, double y, double z)

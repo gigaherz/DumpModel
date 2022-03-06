@@ -1,15 +1,23 @@
 package gigaherz.dumpmodel;
 
+import com.mojang.blaze3d.platform.NativeImage;
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.VertexFormatElement;
-import gigaherz.dumpmodel.builders.BOBBuilder;
+import com.mojang.logging.LogUtils;
 import gigaherz.dumpmodel.builders.OBJBuilder;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.FloatTag;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.client.model.data.IModelData;
+import org.apache.commons.io.FilenameUtils;
+import org.lwjgl.opengl.GL11;
+import org.slf4j.Logger;
 
 import javax.annotation.Nullable;
 import java.io.File;
@@ -18,6 +26,8 @@ import java.util.Random;
 
 public class Utils
 {
+    private static final Logger LOGGER = LogUtils.getLogger();
+
     private static Direction[] DIRECTIONS = {
             null, Direction.EAST, Direction.WEST, Direction.NORTH, Direction.SOUTH, Direction.UP, Direction.DOWN
     };
@@ -26,11 +36,17 @@ public class Utils
     {
         OBJBuilder builder = OBJBuilder.begin();
 
+        var textureFile = dumpTexture(file, TextureAtlas.LOCATION_BLOCKS);
+
+        var blockAtlas = builder.newMaterial(textureFile.getAbsolutePath());
+
         OBJBuilder.Part part = builder.part(name);
 
         for (Direction dir : DIRECTIONS)
         {
             OBJBuilder.Part.Group group = part.group(dir);
+
+            group.setMaterial(blockAtlas);
 
             for (BakedQuad quad : model.getQuads(state, dir, new Random(42), modelData))
             {
@@ -41,23 +57,38 @@ public class Utils
         builder.save(file);
     }
 
-    public static void dumpToBOB(File file, String name, BakedModel model, @Nullable BlockState state, IModelData modelData)
+    public static File dumpTexture(File parentName, ResourceLocation texture)
     {
-        BOBBuilder builder = BOBBuilder.begin();
+        var textureFolder = new File(FilenameUtils.removeExtension(parentName.getAbsolutePath()) + "_textures");
+        textureFolder.mkdirs();
+        var textureFile = new File(textureFolder, texture.toString().replace(":","_").replace("/","_") + ".png");
 
-        BOBBuilder.Part part = builder.part(name);
+        dumpTexture(texture, textureFile);
 
-        for (Direction dir : DIRECTIONS)
+        return textureFile;
+    }
+
+    public static void dumpTexture(ResourceLocation texture, File target)
+    {
+        try (NativeImage nativeimage = downloadTexture(texture))
         {
-            BOBBuilder.Part.Group group = part.group(dir);
-
-            for (BakedQuad quad : model.getQuads(state, dir, new Random(42), modelData))
-            {
-                group.addQuad(quad);
-            }
+            nativeimage.writeToFile(target);
         }
+        catch (Exception exception)
+        {
+            LOGGER.warn("Couldn't save screenshot", exception);
+        }
+    }
 
-        builder.save(file);
+    public static NativeImage downloadTexture(ResourceLocation texture) {
+        var id = Minecraft.getInstance().textureManager.getTexture(texture).getId();
+        RenderSystem.bindTexture(id);
+        int width = GL11.glGetTexLevelParameteri(GL11.GL_TEXTURE_2D, 0, GL11.GL_TEXTURE_WIDTH);
+        int height = GL11.glGetTexLevelParameteri(GL11.GL_TEXTURE_2D, 0, GL11.GL_TEXTURE_HEIGHT);
+        NativeImage nativeimage = new NativeImage(width, height, false);
+        nativeimage.downloadTexture(0, true);
+        nativeimage.flipY();
+        return nativeimage;
     }
 
     public static String formatIndices(List<Integer> indices, boolean hasTex)
