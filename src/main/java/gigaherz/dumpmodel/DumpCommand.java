@@ -60,9 +60,11 @@ import javax.annotation.Nullable;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.Objects;
 import java.util.Random;
 import java.util.Set;
+import java.util.function.Function;
 
 public class DumpCommand
 {
@@ -219,10 +221,12 @@ public class DumpCommand
 
         VertexDumper<SimpleMaterial> dumper = new VertexDumper<>(OBJBuilder.begin());
         BakedModel model = mc.getBlockRenderer().getBlockModelShaper().getBlockModel(state);
-        switch (state.getRenderShape())
+        RenderShape renderShape = state.getRenderShape();
+        boolean isCustomRenderer = model.isCustomRenderer();
+        switch (renderShape)
         {
             case MODEL:
-                if (!model.isCustomRenderer())
+                if (!isCustomRenderer)
                 {
                     mc.getBlockRenderer().renderSingleBlock(state, new PoseStack(), dumper, 0x00F000F0, OverlayTexture.NO_OVERLAY, data);
                 }
@@ -236,26 +240,29 @@ public class DumpCommand
                         BlockEntityRenderer<BlockEntity> ter = Minecraft.getInstance().getBlockEntityRenderDispatcher().getRenderer(te);
                         if (ter == null)
                         {
-                            if (state.getRenderShape() == RenderShape.ENTITYBLOCK_ANIMATED)
+                            if (renderShape == RenderShape.ENTITYBLOCK_ANIMATED)
                             {
                                 mc.gui.handleChat(ChatType.SYSTEM, new TextComponent("The block needs a builtin renderer but there is no TileEntity Renderer."), Util.NIL_UUID);
                                 return 0;
                             }
                         }
-                        ter.render(te, mc.getFrameTime(), new PoseStack(), dumper, 0x00F000F0, OverlayTexture.NO_OVERLAY);
+                        else
+                        {
+                            ter.render(te, mc.getFrameTime(), new PoseStack(), dumper, 0x00F000F0, OverlayTexture.NO_OVERLAY);
+                        }
                     }
-                    else if (model.isCustomRenderer())
+                    else if (isCustomRenderer)
                     {
-                        if (state.getRenderShape() == RenderShape.ENTITYBLOCK_ANIMATED)
+                        if (renderShape == RenderShape.ENTITYBLOCK_ANIMATED)
                         {
                             mc.gui.handleChat(ChatType.SYSTEM, new TextComponent("The block needs a builtin renderer but there is no TileEntity."), Util.NIL_UUID);
                             return 0;
                         }
                     }
                 }
-                else if (model.isCustomRenderer())
+                else if (isCustomRenderer)
                 {
-                    if (state.getRenderShape() == RenderShape.ENTITYBLOCK_ANIMATED)
+                    if (renderShape == RenderShape.ENTITYBLOCK_ANIMATED)
                     {
                         mc.gui.handleChat(ChatType.SYSTEM, new TextComponent("The block needs a builtin renderer but I have no BlockPos context."), Util.NIL_UUID);
                         return 0;
@@ -349,7 +356,7 @@ public class DumpCommand
 
     private static int dumpScene(AABB aabb)
     {
-        Path folder, file;
+        Path folder, outPath;
         var timestamp = System.currentTimeMillis();
         do
         {
@@ -357,9 +364,9 @@ public class DumpCommand
                     .resolve("models/scenes");
             //noinspection ResultOfMethodCallIgnored
             folder.toFile().mkdirs();
-            file = folder.resolve("scene_" + timestamp + ".obj");
+            outPath = folder.resolve("scene_" + timestamp + ".obj");
             timestamp++;
-        } while (Files.exists(file));
+        } while (Files.exists(outPath));
 
         try
         {
@@ -375,12 +382,13 @@ public class DumpCommand
             var builder = OBJBuilder.begin();
 
             var posestack = new PoseStack();
-            posestack.pushPose();
-
-            var c = aabb.getCenter();
-            posestack.translate(-c.x, -c.y, -c.z);
 
             var dumper0 = new VertexDumper<>(builder, true);
+
+            var outFile = outPath.toFile();
+            var textures = new HashMap<ResourceLocation, String>();
+            Function<ResourceLocation, String> textureDumper = tx ->
+                    textures.computeIfAbsent(tx, tex -> Utils.dumpTexture(outFile, tx).getAbsolutePath());
 
             BlockAndTintGetter level = new LimitedWrapper(mc.level, minP, maxP);
             Set<BlockEntity> blockEntities = Sets.newHashSet();
@@ -430,7 +438,7 @@ public class DumpCommand
                 }
             }
             net.minecraftforge.client.ForgeHooksClient.setRenderType(null);
-            dumper0.dumpToOBJ(file.toFile(), "terrain");
+            dumper0.finish(textureDumper, "terrain");
 
             for (var entity : entities)
             {
@@ -446,7 +454,7 @@ public class DumpCommand
                     renderer.render(entity, 0, mc.getFrameTime(), posestack, dumper, 0x00F000F0);
                 }
 
-                dumper.dumpToOBJ(file.toFile(), String.format("entity_%s", entity.getId()));
+                dumper.finish(textureDumper, String.format("entity_%s", entity.getId()));
 
                 posestack.popPose();
             }
@@ -465,12 +473,12 @@ public class DumpCommand
                 {
                     renderer.render(be, 0, posestack, dumper, LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY);
 
-                    dumper.dumpToOBJ(file.toFile(), String.format("be_%s_%s_%s", pos.getX(), pos.getY(), pos.getZ()));
+                    dumper.finish(textureDumper, String.format("be_%s_%s_%s", pos.getX(), pos.getY(), pos.getZ()));
                 }
                 posestack.popPose();
             }
 
-            return dumpBuilder(mc, builder, folder, file);
+            return dumpBuilder(mc, builder, folder, outPath);
         }
         catch (Exception e)
         {
@@ -481,6 +489,11 @@ public class DumpCommand
 
     private static int dumpVertexDumper(Minecraft mc, VertexDumper<?> dumper, Path folder, Path file)
     {
+        var textures = new HashMap<ResourceLocation, String>();
+        Function<ResourceLocation, String> textureDumper = tx ->
+                textures.computeIfAbsent(tx, tex -> Utils.dumpTexture(file.toFile(), tx).getAbsolutePath());
+        dumper.finish(textureDumper, "object1");
+
         return dumpBuilder(mc, dumper.builder, folder, file);
     }
 

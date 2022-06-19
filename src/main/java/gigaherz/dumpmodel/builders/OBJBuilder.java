@@ -89,10 +89,18 @@ public class OBJBuilder
                 for(var mat : materialLibrary.values())
                 {
                     writer.write(String.format("newmtl %s\n", mat.name()));
+                    if (mat.r() != 1 || mat.g() != 1 || mat.b() != 1)
+                    {
+                        writer.write(String.format("Kd %s %s %s\n", mat.r(), mat.g(), mat.b()));
+                    }
                     if (mat.texture() != null)
+                    {
                         writer.write(String.format("map_Kd %s\n", mat.texture()));
-                    if (mat.r() != 1 || mat.g() != 1 || mat.b() != 1 || mat.a() != 1)
-                        writer.write(String.format("Kd %s %s %s %s\n", mat.r(), mat.g(), mat.b(), mat.a()));
+                    }
+                    if (mat.a() != 1)
+                    {
+                        writer.write(String.format("opacity %s\n", mat.a()));
+                    }
                     writer.write("\n");
                 }
             }
@@ -108,8 +116,14 @@ public class OBJBuilder
     @Override
     public SimpleMaterial newMaterial(String tex)
     {
+        return newMaterial(tex, 1,1,1,1);
+    }
+
+    @Override
+    public SimpleMaterial newMaterial(String tex, float r, float g, float b, float a)
+    {
         var autoname = "Mat_" + materialLibrary.size();
-        var mat = new SimpleMaterial(autoname, tex, 1,1,1,1);
+        var mat = new SimpleMaterial(autoname, tex, r,g,b,a);
         materialLibrary.put(autoname, mat);
         return mat;
     }

@@ -11,8 +11,8 @@ apply plugin: 'net.minecraftforge.gradle'
 // Only edit below this line, the above code adds and enables the necessary things for Forge to be setup.
 apply plugin: 'maven-publish'
 
-version = '1.5'
-group = 'gigaherz.dumpmodel'
+version = '1.6'
+group = 'dev.gigaherz.dumpmodel'
 archivesBaseName = 'DumpModel-1.18.2'
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(17)
@@ -51,8 +51,14 @@ minecraft {
     }
 }
 
+repositories {
+    maven { url 'https://jitpack.io' }
+}
+
 dependencies {
-    minecraft 'net.minecraftforge:forge:1.18.2-40.0.3'
+    minecraft 'net.minecraftforge:forge:1.18.2-40.0.12'
+
+    //implementation 'com.github.javagl.JglTF:jgltf-impl-v2:master'
 }
 
 jar {
@@ -69,28 +75,48 @@ jar {
     }
 }
 
-tasks.publish.dependsOn build
-publishing {
-    publications {
-        mavenJava(MavenPublication) {
-            artifactId project.archivesBaseName
-            from components.java
+tasks.withType(GenerateModuleMetadata) {
+    enabled = false
+}
 
-            //artifact sourceJar
+project.afterEvaluate {
+    publish.dependsOn('build')
+    publishing {
+        publications {
+            mavenJava(MavenPublication) {
+                artifactId project.archivesBaseName
+                from components.java
 
-            pom.withXml {
-                asNode().dependencies.dependency.each { dep ->
-                    if(dep.groupId.last().value().last() in ["net.minecraftforge"]) {
-                        assert dep.parent().remove(dep)
+                //artifact sourceJar
+
+                pom.withXml {
+                    asNode().dependencies.dependency.each { dep ->
+                        if (dep.groupId.last().value().last() in
+                                    ["net.minecraftforge"]) {
+                            assert dep.parent().remove(dep)
+                        }
                     }
                 }
             }
         }
-    }
 
-    repositories {
-        maven {
-            url "$projectDir/../CommonMaven"
+        repositories {
+            if (findProperty("RELEASE") && System.env.giga_maven_host != null) {
+                System.out.println("Remote publish enabled on " + System.env.giga_maven_host)
+                maven {
+                    url System.env.giga_maven_host
+                    credentials {
+                        username System.env.giga_maven_user
+                        password System.env.giga_maven_password
+                    }
+                }
+            }
+            else {
+                System.out.println("Remote publish disabled.")
+                maven {
+                    url "$projectDir/../CommonMaven"
+                }
+            }
         }
     }
 }

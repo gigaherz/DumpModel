@@ -10,10 +10,10 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
 
-import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 public class VertexDumper<M extends IMaterial<M>> implements MultiBufferSource
@@ -40,11 +40,11 @@ public class VertexDumper<M extends IMaterial<M>> implements MultiBufferSource
         this.doBuffer = doBuffer;
     }
 
-    public void dumpToOBJ(File file, String name)
+    public void finish(Function<ResourceLocation, String> textureDumper, String name)
     {
         IBuilderPart<?, ?, ?, ?, ?, M> partBuilder = builder.part(name);
 
-        Map<ResourceLocation, M> textureMap = new HashMap<>();
+        Map<Pair<ResourceLocation,Integer>, M> materials = new HashMap<>();
 
         int partNumber = 0;
         for (Pair<RenderType, VertexAccumulator> part : parts)
@@ -52,64 +52,78 @@ public class VertexDumper<M extends IMaterial<M>> implements MultiBufferSource
             RenderType rt = part.getFirst();
             VertexAccumulator acc = part.getSecond();
 
-            ResourceLocation texture = null;
-            if (rt instanceof RenderType.CompositeRenderType composite)
+            for(var packedColor : acc.colorsUsed)
             {
-                var state = composite.state();
-                var tex = state.textureState;
-                texture = tex.cutoutTexture().orElse(null);
-            }
+                final float r = ((packedColor >> 24) & 0xFF) / 255.0f;
+                final float g = ((packedColor >> 16) & 0xFF) / 255.0f;
+                final float b = ((packedColor >> 8) & 0xFF) / 255.0f;
+                final float a = ((packedColor) & 0xFF) / 255.0f;
 
-            IBuilderGroup<?, ?, ?, ?, ?, M> groupBuilder = partBuilder.group(String.format("%s_part_%s\n", name, ++partNumber), null);
-
-            if (texture != null)
-            {
-                var texName = textureMap.computeIfAbsent(texture, tx -> {
-                    var path = Utils.dumpTexture(file, tx).getAbsolutePath();
-                    return builder.newMaterial(path);
-                });
-                groupBuilder.setMaterial(texName);
-            }
-
-            VertexFormat fmt = rt.format();
-            VertexFormat.Mode drawMode = rt.mode();
-            int verticesPerElement;
-            if (drawMode == VertexFormat.Mode.QUADS)
-                verticesPerElement = 4;
-            else if (drawMode == VertexFormat.Mode.TRIANGLES)
-                verticesPerElement = 3;
-            else
-                throw new RuntimeException(String.format("Unsupported GL drawing mode %s", drawMode));
-
-            IBuilderFace<?, ?, ?, ?, ?, M> faceBuilder = groupBuilder.face();
-            int vertexNumber = 0;
-            for (VertexAccumulator.VertexData data : acc.vertices)
-            {
-                IBuilderVertex<?, ?, ?, ?, ?, M> vertexBuilder = faceBuilder.vertex();
-                for (VertexFormatElement element : fmt.getElements())
+                final ResourceLocation texture;
+                if (rt instanceof RenderType.CompositeRenderType composite)
                 {
-                    if (element.getUsage() != VertexFormatElement.Usage.PADDING)
+                    var state = composite.state();
+                    var tex = state.textureState;
+                    texture = tex.cutoutTexture().orElse(null);
+                }
+                else
+                {
+                    texture = null;
+                }
+
+                IBuilderGroup<?, ?, ?, ?, ?, M> groupBuilder = partBuilder.group(String.format("%s_part_%s_%s\n", name, ++partNumber, packedColor), null);
+
+                if (texture != null)
+                {
+                    var texName = materials.computeIfAbsent(Pair.of(texture,packedColor), tx -> {
+                        var path = textureDumper.apply(texture);
+                        return builder.newMaterial(path, r, g, b, a);
+                    });
+                    groupBuilder.setMaterial(texName);
+                }
+
+                VertexFormat fmt = rt.format();
+                VertexFormat.Mode drawMode = rt.mode();
+                int verticesPerElement;
+                if (drawMode == VertexFormat.Mode.QUADS)
+                    verticesPerElement = 4;
+                else if (drawMode == VertexFormat.Mode.TRIANGLES)
+                    verticesPerElement = 3;
+                else
+                    throw new RuntimeException(String.format("Unsupported GL drawing mode %s", drawMode));
+
+                IBuilderFace<?, ?, ?, ?, ?, M> faceBuilder = groupBuilder.face();
+                int vertexNumber = 0;
+                for (VertexAccumulator.VertexData data : acc.vertices)
+                {
+                    if (data.packedColor != packedColor) continue;
+
+                    IBuilderVertex<?, ?, ?, ?, ?, M> vertexBuilder = faceBuilder.vertex();
+                    for (VertexFormatElement element : fmt.getElements())
                     {
-                        int index = element.getIndex();
-                        vertexBuilder = switch (element.getUsage())
+                        if (element.getUsage() != VertexFormatElement.Usage.PADDING)
                         {
-                            case POSITION -> vertexBuilder.element(element, data.pos.x, data.pos.y, data.pos.z);
-                            case UV -> vertexBuilder.element(element, data.uv[index].x, data.uv[index].y);
-                            case NORMAL -> vertexBuilder.element(element, data.normal.x(), data.normal.y(), data.normal.z());
-                            case COLOR -> vertexBuilder.element(element, data.color[0], data.color[1], data.color[2], data.color[3]);
-                            default -> vertexBuilder;
-                        };
+                            int index = element.getIndex();
+                            vertexBuilder = switch (element.getUsage())
+                                    {
+                                        case POSITION -> vertexBuilder.element(element, data.pos.x, data.pos.y, data.pos.z);
+                                        case UV -> vertexBuilder.element(element, data.uv[index].x, data.uv[index].y);
+                                        case NORMAL -> vertexBuilder.element(element, data.normal.x(), data.normal.y(), data.normal.z());
+                                        case COLOR -> vertexBuilder.element(element, 255,255,255,255);
+                                        default -> vertexBuilder;
+                                    };
+                        }
+                    }
+                    faceBuilder = vertexBuilder.end();
+
+                    if (++vertexNumber >= verticesPerElement)
+                    {
+                        faceBuilder = faceBuilder.end().face();
+                        vertexNumber = 0;
                     }
                 }
-                faceBuilder = vertexBuilder.end();
-
-                if (++vertexNumber >= verticesPerElement)
-                {
-                    faceBuilder = faceBuilder.end().face();
-                    vertexNumber = 0;
-                }
+                partBuilder = faceBuilder.end().end();
             }
-            partBuilder = faceBuilder.end().end();
         }
     }
 
@@ -126,7 +140,7 @@ public class VertexDumper<M extends IMaterial<M>> implements MultiBufferSource
                 }
             }
         }
-        VertexAccumulator acc = new VertexAccumulator();
+        VertexAccumulator acc = new VertexAccumulator(rt.mode().primitiveStride);
         parts.add(Pair.of(rt, acc));
         return acc;
     }

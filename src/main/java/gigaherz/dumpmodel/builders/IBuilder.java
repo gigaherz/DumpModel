@@ -15,4 +15,5 @@ public interface IBuilder<
     void save(File file);
 
     M newMaterial(String path);
+    M newMaterial(String path, float r, float g, float b, float a);
 }
