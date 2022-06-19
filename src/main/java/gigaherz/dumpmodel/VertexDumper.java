@@ -140,7 +140,7 @@ public class VertexDumper<M extends IMaterial<M>> implements MultiBufferSource
                 }
             }
         }
-        VertexAccumulator acc = new VertexAccumulator(rt.mode().primitiveStride);
+        VertexAccumulator acc = new VertexAccumulator(rt.format(), rt.mode().primitiveStride);
         parts.add(Pair.of(rt, acc));
         return acc;
     }

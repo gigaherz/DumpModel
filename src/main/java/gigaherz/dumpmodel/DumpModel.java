@@ -22,6 +22,6 @@ public class DumpModel
 
     private void clientCommands(RegisterClientCommandsEvent event)
     {
-        DumpCommand.init(event.getDispatcher());
+        DumpCommand.init(event.getDispatcher(), event.getBuildContext());
     }
 }

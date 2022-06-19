@@ -13,6 +13,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.nbt.FloatTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.client.model.data.IModelData;
 import org.apache.commons.io.FilenameUtils;
@@ -28,7 +29,7 @@ public class Utils
 {
     private static final Logger LOGGER = LogUtils.getLogger();
 
-    private static Direction[] DIRECTIONS = {
+    private static final Direction[] DIRECTIONS = {
             null, Direction.EAST, Direction.WEST, Direction.NORTH, Direction.SOUTH, Direction.UP, Direction.DOWN
     };
 
@@ -42,13 +43,15 @@ public class Utils
 
         OBJBuilder.Part part = builder.part(name);
 
+        RandomSource rnd = RandomSource.create();
         for (Direction dir : DIRECTIONS)
         {
             OBJBuilder.Part.Group group = part.group(dir);
 
             group.setMaterial(blockAtlas);
 
-            for (BakedQuad quad : model.getQuads(state, dir, new Random(42), modelData))
+            rnd.setSeed(42);
+            for (BakedQuad quad : model.getQuads(state, dir, rnd, modelData))
             {
                 group.addQuad(quad);
             }

@@ -23,6 +23,7 @@ import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
@@ -34,6 +35,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.network.chat.*;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.boss.EnderDragonPart;
@@ -55,6 +57,7 @@ import net.minecraftforge.client.model.data.EmptyModelData;
 import net.minecraftforge.client.model.data.IModelData;
 import net.minecraftforge.entity.PartEntity;
 import net.minecraftforge.fml.loading.FMLPaths;
+import net.minecraftforge.registries.ForgeRegistries;
 
 import javax.annotation.Nullable;
 import java.io.File;
@@ -68,12 +71,7 @@ import java.util.function.Function;
 
 public class DumpCommand
 {
-    public static void init(CommandDispatcher<CommandSourceStack> dispatcher)
-    {
-        registerCommands(dispatcher);
-    }
-
-    private static void registerCommands(CommandDispatcher<CommandSourceStack> dispatcher)
+    public static void init(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext buildContext)
     {
         dispatcher.register(
                 LiteralArgumentBuilder.<CommandSourceStack>literal("dumpmodel")
@@ -90,11 +88,11 @@ public class DumpCommand
                         .then(Commands.literal("target")
                                 .executes((ctx) -> dumpTargettedBlock()))
                         .then(Commands.literal("item")
-                                .then(Commands.argument("item", ItemArgument.item())
+                                .then(Commands.argument("item", ItemArgument.item(buildContext))
                                         .executes((ctx) ->
                                                 dumpItemModel(ItemArgument.getItem(ctx, "item").createItemStack(1, false)))))
                         .then(Commands.literal("block")
-                                .then(Commands.argument("block", BlockStateArgument.block())
+                                .then(Commands.argument("block", BlockStateArgument.block(buildContext))
                                         .executes((ctx) -> dumpBlockModel(BlockStateArgument.getBlock(ctx, "block").getState(), null))))
                         .then(Commands.literal("entity")
                                 .then(Commands.argument("entity", EntityArgument.entity())
@@ -134,7 +132,7 @@ public class DumpCommand
         ItemStack held = Objects.requireNonNull(mc.player).getItemInHand(hand);
         if (held.getCount() <= 0)
         {
-            mc.gui.handleChat(ChatType.SYSTEM, new TextComponent("You must be holding an item in your " + hand + " to use this command."), Util.NIL_UUID);
+            mc.gui.getChat().addMessage(Component.literal("You must be holding an item in your " + hand + " to use this command."));
             return 0;
         }
 
@@ -146,7 +144,7 @@ public class DumpCommand
         Minecraft mc = Minecraft.getInstance();
         if (mc.hitResult == null || (mc.hitResult.getType() != HitResult.Type.BLOCK && mc.hitResult.getType() != HitResult.Type.ENTITY))
         {
-            mc.gui.handleChat(ChatType.SYSTEM, new TextComponent("You must be looking at a block or entity to use the 'target' subcommand."), Util.NIL_UUID);
+            mc.gui.getChat().addMessage(Component.literal("You must be looking at a block or entity to use the 'target' subcommand."));
             return 0;
         }
 
@@ -169,7 +167,7 @@ public class DumpCommand
     {
         Minecraft mc = Minecraft.getInstance();
         BakedModel model = mc.getItemRenderer().getModel(stack, mc.level, mc.player, 0);
-        ResourceLocation regName = stack.getItem().getRegistryName();
+        ResourceLocation regName = ForgeRegistries.ITEMS.getKey(stack.getItem());
         if (regName == null)
             throw new RuntimeException("Item registry name is null");
         Path folder = FMLPaths.GAMEDIR.get()
@@ -211,7 +209,7 @@ public class DumpCommand
             if (data == null) data = EmptyModelData.INSTANCE;
         }
 
-        ResourceLocation regName = state.getBlock().getRegistryName();
+        ResourceLocation regName = ForgeRegistries.BLOCKS.getKey(state.getBlock());
         if (regName == null)
             throw new RuntimeException("Block registry name is null");
         Path folder = FMLPaths.GAMEDIR.get()
@@ -242,7 +240,7 @@ public class DumpCommand
                         {
                             if (renderShape == RenderShape.ENTITYBLOCK_ANIMATED)
                             {
-                                mc.gui.handleChat(ChatType.SYSTEM, new TextComponent("The block needs a builtin renderer but there is no TileEntity Renderer."), Util.NIL_UUID);
+                                mc.gui.getChat().addMessage(Component.literal("The block needs a builtin renderer but there is no TileEntity Renderer."));
                                 return 0;
                             }
                         }
@@ -255,7 +253,7 @@ public class DumpCommand
                     {
                         if (renderShape == RenderShape.ENTITYBLOCK_ANIMATED)
                         {
-                            mc.gui.handleChat(ChatType.SYSTEM, new TextComponent("The block needs a builtin renderer but there is no TileEntity."), Util.NIL_UUID);
+                            mc.gui.getChat().addMessage(Component.literal("The block needs a builtin renderer but there is no TileEntity."));
                             return 0;
                         }
                     }
@@ -264,7 +262,7 @@ public class DumpCommand
                 {
                     if (renderShape == RenderShape.ENTITYBLOCK_ANIMATED)
                     {
-                        mc.gui.handleChat(ChatType.SYSTEM, new TextComponent("The block needs a builtin renderer but I have no BlockPos context."), Util.NIL_UUID);
+                        mc.gui.getChat().addMessage(Component.literal("The block needs a builtin renderer but I have no BlockPos context."));
                         return 0;
                     }
                 }
@@ -300,7 +298,7 @@ public class DumpCommand
                 renderer.render(entity, 0, mc.getFrameTime(), new PoseStack(), dumper, 0x00F000F0);
             }
 
-            ResourceLocation regName = entity.getType().getRegistryName();
+            ResourceLocation regName = ForgeRegistries.ENTITIES.getKey(entity.getType());
             if (regName == null)
                 throw new RuntimeException("EntityType registry name is null");
             Path folder = FMLPaths.GAMEDIR.get()
@@ -393,7 +391,7 @@ public class DumpCommand
             BlockAndTintGetter level = new LimitedWrapper(mc.level, minP, maxP);
             Set<BlockEntity> blockEntities = Sets.newHashSet();
             VisGraph visgraph = new VisGraph();
-            Random random = new Random();
+            RandomSource random = RandomSource.create();
             BlockRenderDispatcher blockrenderdispatcher = Minecraft.getInstance().getBlockRenderer();
             for (var blockpos2 : BlockPos.betweenClosed(minP, maxP))
             {
@@ -531,13 +529,13 @@ public class DumpCommand
 
     private static void showSuccessMessage(Minecraft mc, File outFolder, File outFile, String what)
     {
-        MutableComponent pathComponent = new TextComponent(outFile.getAbsolutePath());
+        MutableComponent pathComponent = Component.literal(outFile.getAbsolutePath());
         pathComponent = pathComponent.withStyle(style -> style
                 .withUnderlined(true)
                 .withColor(ChatFormatting.GREEN)
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponent("Click to open folder")))
+                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("Click to open folder")))
                 .withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_FILE, outFolder.getAbsolutePath())));
-        mc.gui.handleChat(ChatType.SYSTEM, new TextComponent(what + " dumped to ").append(pathComponent), Util.NIL_UUID);
+        mc.gui.getChat().addMessage(Component.literal(what + " dumped to ").append(pathComponent));
     }
 
     private static class LimitedWrapper implements BlockAndTintGetter

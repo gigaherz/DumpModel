@@ -3,6 +3,7 @@ package gigaherz.dumpmodel;
 import com.google.common.collect.Lists;
 import com.mojang.blaze3d.vertex.DefaultedVertexConsumer;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.math.Vector3f;
 import net.minecraft.util.FastColor;
 import net.minecraft.world.phys.Vec2;
@@ -16,6 +17,7 @@ public class VertexAccumulator extends DefaultedVertexConsumer implements Vertex
 {
     public final List<VertexData> vertices = Lists.newArrayList();
     public final Set<Integer> colorsUsed = new HashSet<>();
+    private final VertexFormat vertexFormat;
     private final int primitiveLength;
     private int index = 0;
     private int currentPacked = -1;
@@ -25,8 +27,9 @@ public class VertexAccumulator extends DefaultedVertexConsumer implements Vertex
     private int currentA = -1;
     private VertexData current = new VertexData();
 
-    public VertexAccumulator(int primitiveLength)
+    public VertexAccumulator(VertexFormat vertexFormat, int primitiveLength)
     {
+        this.vertexFormat = vertexFormat;
         this.primitiveLength = primitiveLength;
     }
 
@@ -103,6 +106,12 @@ public class VertexAccumulator extends DefaultedVertexConsumer implements Vertex
         }
 
         index=(index+1)%primitiveLength;
+    }
+
+    @Override
+    public VertexFormat getVertexFormat()
+    {
+        return vertexFormat;
     }
 
     public static class VertexData
