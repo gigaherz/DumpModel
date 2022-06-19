@@ -11,7 +11,7 @@ apply plugin: 'net.minecraftforge.gradle'
 // Only edit below this line, the above code adds and enables the necessary things for Forge to be setup.
 apply plugin: 'maven-publish'
 
-version = '1.6'
+version = '1.6.1'
 group = 'dev.gigaherz.dumpmodel'
 archivesBaseName = 'DumpModel-1.18.2'
 
@@ -51,12 +51,12 @@ minecraft {
     }
 }
 
-repositories {
+/*repositories {
     maven { url 'https://jitpack.io' }
-}
+}*/
 
 dependencies {
-    minecraft 'net.minecraftforge:forge:1.18.2-40.0.12'
+    minecraft 'net.minecraftforge:forge:1.18.2-40.1.51'
 
     //implementation 'com.github.javagl.JglTF:jgltf-impl-v2:master'
 }

@@ -1,6 +1,7 @@
 package gigaherz.dumpmodel;
 
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.math.Matrix3f;
 import com.mojang.math.Matrix4f;
 
@@ -69,5 +70,11 @@ public class TransformingConsumer implements VertexConsumer
     public void unsetDefaultColor()
     {
         buffer.unsetDefaultColor();
+    }
+
+    @Override
+    public VertexFormat getVertexFormat()
+    {
+        return buffer.getVertexFormat();
     }
 }
