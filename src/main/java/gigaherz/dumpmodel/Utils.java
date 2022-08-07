@@ -4,7 +4,9 @@ import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.VertexFormatElement;
 import com.mojang.logging.LogUtils;
-import gigaherz.dumpmodel.builders.OBJBuilder;
+import gigaherz.dumpmodel.builders.ModelGroup;
+import gigaherz.dumpmodel.builders.ModelMesh;
+import gigaherz.dumpmodel.builders.OBJModelBuilder;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.texture.TextureAtlas;
@@ -32,18 +34,18 @@ public class Utils
 
     public static void dumpToOBJ(File file, String name, BakedModel model)
     {
-        OBJBuilder builder = OBJBuilder.begin();
+        OBJModelBuilder builder = OBJModelBuilder.begin();
 
         var textureFile = dumpTexture(file, TextureAtlas.LOCATION_BLOCKS);
 
         var blockAtlas = builder.newMaterial(textureFile.getAbsolutePath());
 
-        OBJBuilder.Part part = builder.part(name);
+        ModelGroup part = builder.part(name);
 
         RandomSource rnd = RandomSource.create();
         for (Direction dir : DIRECTIONS)
         {
-            OBJBuilder.Part.Group group = part.group(dir);
+            ModelMesh group = part.group(dir);
 
             group.setMaterial(blockAtlas);
 

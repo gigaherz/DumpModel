@@ -5,11 +5,10 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import gigaherz.dumpmodel.builders.IBuilder;
-import gigaherz.dumpmodel.builders.OBJBuilder;
-import gigaherz.dumpmodel.builders.SimpleMaterial;
+import gigaherz.dumpmodel.builders.IModelBuilder;
+import gigaherz.dumpmodel.builders.OBJModelBuilder;
+import gigaherz.dumpmodel.builders.ModelMaterial;
 import net.minecraft.ChatFormatting;
-import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
@@ -53,7 +52,6 @@ import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.phys.*;
 import net.minecraftforge.client.extensions.common.IClientItemExtensions;
 import net.minecraftforge.client.model.data.ModelData;
-import net.minecraftforge.client.model.data.ModelDataManager;
 import net.minecraftforge.entity.PartEntity;
 import net.minecraftforge.fml.loading.FMLPaths;
 import net.minecraftforge.registries.ForgeRegistries;
@@ -64,7 +62,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Objects;
-import java.util.Random;
 import java.util.Set;
 import java.util.function.Function;
 
@@ -185,7 +182,7 @@ public class DumpCommand
 
         if (model.isCustomRenderer())
         {
-            VertexDumper<SimpleMaterial> dumper = new VertexDumper<>(OBJBuilder.begin());
+            VertexDumper<ModelMaterial> dumper = new VertexDumper<>(OBJModelBuilder.begin());
             IClientItemExtensions.of(stack.getItem()).getCustomRenderer()
                     .renderByItem(stack, ItemTransforms.TransformType.FIXED, new PoseStack(), dumper, 0x00F000F0, OverlayTexture.NO_OVERLAY);
 
@@ -216,7 +213,7 @@ public class DumpCommand
                 .resolve(regName.getNamespace());
         Path file = folder.resolve(regName.getPath() + ".obj");
 
-        VertexDumper<SimpleMaterial> dumper = new VertexDumper<>(OBJBuilder.begin());
+        VertexDumper<ModelMaterial> dumper = new VertexDumper<>(OBJModelBuilder.begin());
         BakedModel model = mc.getBlockRenderer().getBlockModelShaper().getBlockModel(state);
         RenderShape renderShape = state.getRenderShape();
         boolean isCustomRenderer = model.isCustomRenderer();
@@ -281,7 +278,7 @@ public class DumpCommand
             if (mc.player == null || mc.level == null)
                 return 0;
 
-            VertexDumper<SimpleMaterial> dumper = new VertexDumper<>(OBJBuilder.begin());
+            VertexDumper<ModelMaterial> dumper = new VertexDumper<>(OBJModelBuilder.begin());
 
             if (entity instanceof EnderDragonPart dragonPart)
             {
@@ -379,7 +376,7 @@ public class DumpCommand
             var minP = new BlockPos(aabb.minX, aabb.minY, aabb.minZ);
             var maxP = new BlockPos(Mth.ceil(aabb.maxX), Mth.ceil(aabb.maxY), Mth.ceil(aabb.maxZ));
 
-            var builder = OBJBuilder.begin();
+            var builder = OBJModelBuilder.begin();
 
             var posestack = new PoseStack();
 
@@ -495,7 +492,7 @@ public class DumpCommand
         return dumpBuilder(mc, dumper.builder, folder, file);
     }
 
-    private static int dumpBuilder(Minecraft mc, IBuilder<?, ?, ?, ?, ?, ?> builder, Path folder, Path file)
+    private static int dumpBuilder(Minecraft mc, IModelBuilder<?, ?, ?, ?, ?, ?> builder, Path folder, Path file)
     {
         File outFolder = folder.toFile();
         File outFile = file.toFile();

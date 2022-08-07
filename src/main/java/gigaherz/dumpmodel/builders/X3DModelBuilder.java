@@ -13,8 +13,8 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-public class X3DBuilder
-        implements IBuilder<X3DBuilder, X3DBuilder.Part, X3DBuilder.Part.Group, X3DBuilder.Part.Group.Face, X3DBuilder.Part.Group.Face.Vertex, X3DBuilder.Material>
+public class X3DModelBuilder
+        implements IModelBuilder<X3DModelBuilder, X3DModelBuilder.Part, X3DModelBuilder.Part.Group, X3DModelBuilder.Part.Group.Face, X3DModelBuilder.Part.Group.Face.Vertex, X3DModelBuilder.Material>
 {
     private final List<Pair<String, Part>> parts = new ArrayList<>();
     private final List<Pair<String, Material>> materials = new ArrayList<>();
@@ -26,7 +26,7 @@ public class X3DBuilder
     }
 
     @Override
-    public X3DBuilder.Part part(String name)
+    public X3DModelBuilder.Part part(String name)
     {
         var part = new Part();
         parts.add(Pair.of(name, part));
@@ -34,7 +34,7 @@ public class X3DBuilder
     }
 
     @Override
-    public X3DBuilder.Material newMaterial(String path)
+    public X3DModelBuilder.Material newMaterial(String path)
     {
         var part = new Material(path);
         materials.add(Pair.of(path, part));
@@ -42,13 +42,13 @@ public class X3DBuilder
     }
 
     @Override
-    public X3DBuilder.Material newMaterial(String path, float r, float g, float b, float a)
+    public X3DModelBuilder.Material newMaterial(String path, float r, float g, float b, float a)
     {
         return null;
     }
 
     public class Part
-            implements IBuilderPart<X3DBuilder, Part, Part.Group, Part.Group.Face, Part.Group.Face.Vertex, Material>
+            implements IModelGroup<X3DModelBuilder, Part, Part.Group, Part.Group.Face, Part.Group.Face.Vertex, Material>
     {
         private final List<Pair<String, Group>> groups = new ArrayList<>();
 
@@ -73,12 +73,12 @@ public class X3DBuilder
         }
 
         @Override
-        public X3DBuilder end()
+        public X3DModelBuilder end()
         {
-            return X3DBuilder.this;
+            return X3DModelBuilder.this;
         }
 
-        public class Group implements IBuilderGroup<X3DBuilder, Part, Group, Group.Face, Group.Face.Vertex, Material>
+        public class Group implements IModelMesh<X3DModelBuilder, Part, Group, Group.Face, Group.Face.Vertex, Material>
         {
             private final List<Face> faces = new ArrayList<>();
             private Material material;
@@ -160,7 +160,7 @@ public class X3DBuilder
                 return this;
             }
 
-            public class Face implements IBuilderFace<X3DBuilder, Part, Group, Face, Face.Vertex, Material>
+            public class Face implements IModelFace<X3DModelBuilder, Part, Group, Face, Face.Vertex, Material>
             {
                 @Override
                 public Vertex vertex()
@@ -174,7 +174,7 @@ public class X3DBuilder
                     return Group.this;
                 }
 
-                public class Vertex implements IBuilderVertex<X3DBuilder, Part, Group, Face, Vertex, Material>
+                public class Vertex implements IModelFaceVertex<X3DModelBuilder, Part, Group, Face, Vertex, Material>
                 {
                     @Override
                     public Vertex position(double x, double y, double z)

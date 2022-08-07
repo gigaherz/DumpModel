@@ -20,21 +20,21 @@ public class VertexDumper<M extends IMaterial<M>> implements MultiBufferSource
 {
     public List<Pair<RenderType, VertexAccumulator>> parts = Lists.newArrayList();
 
-    public final IBuilder<?, ?, ?, ?, ?, M> builder;
+    public final IModelBuilder<?, ?, ?, ?, ?, M> builder;
 
     private final Predicate<RenderType> doBuffer;
 
-    public VertexDumper(IBuilder<?, ?, ?, ?, ?, M> builder)
+    public VertexDumper(IModelBuilder<?, ?, ?, ?, ?, M> builder)
     {
         this(builder, false);
     }
 
-    public VertexDumper(IBuilder<?, ?, ?, ?, ?, M> builder, boolean optimized)
+    public VertexDumper(IModelBuilder<?, ?, ?, ?, ?, M> builder, boolean optimized)
     {
         this(builder, rt -> optimized);
     }
 
-    public VertexDumper(IBuilder<?, ?, ?, ?, ?, M> builder, Predicate<RenderType> doBuffer)
+    public VertexDumper(IModelBuilder<?, ?, ?, ?, ?, M> builder, Predicate<RenderType> doBuffer)
     {
         this.builder = builder;
         this.doBuffer = doBuffer;
@@ -42,7 +42,7 @@ public class VertexDumper<M extends IMaterial<M>> implements MultiBufferSource
 
     public void finish(Function<ResourceLocation, String> textureDumper, String name)
     {
-        IBuilderPart<?, ?, ?, ?, ?, M> partBuilder = builder.part(name);
+        IModelGroup<?, ?, ?, ?, ?, M> partBuilder = builder.part(name);
 
         Map<Pair<ResourceLocation,Integer>, M> materials = new HashMap<>();
 
@@ -71,7 +71,7 @@ public class VertexDumper<M extends IMaterial<M>> implements MultiBufferSource
                     texture = null;
                 }
 
-                IBuilderGroup<?, ?, ?, ?, ?, M> groupBuilder = partBuilder.group(String.format("%s_part_%s_%s\n", name, ++partNumber, packedColor), null);
+                IModelMesh<?, ?, ?, ?, ?, M> groupBuilder = partBuilder.group(String.format("%s_part_%s_%s\n", name, ++partNumber, packedColor), null);
 
                 if (texture != null)
                 {
@@ -92,13 +92,13 @@ public class VertexDumper<M extends IMaterial<M>> implements MultiBufferSource
                 else
                     throw new RuntimeException(String.format("Unsupported GL drawing mode %s", drawMode));
 
-                IBuilderFace<?, ?, ?, ?, ?, M> faceBuilder = groupBuilder.face();
+                IModelFace<?, ?, ?, ?, ?, M> faceBuilder = groupBuilder.face();
                 int vertexNumber = 0;
                 for (VertexAccumulator.VertexData data : acc.vertices)
                 {
                     if (data.packedColor != packedColor) continue;
 
-                    IBuilderVertex<?, ?, ?, ?, ?, M> vertexBuilder = faceBuilder.vertex();
+                    IModelFaceVertex<?, ?, ?, ?, ?, M> vertexBuilder = faceBuilder.vertex();
                     for (VertexFormatElement element : fmt.getElements())
                     {
                         if (element.getUsage() != VertexFormatElement.Usage.PADDING)
