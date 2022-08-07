@@ -72,9 +72,4 @@ public class TransformingConsumer implements VertexConsumer
         buffer.unsetDefaultColor();
     }
 
-    @Override
-    public VertexFormat getVertexFormat()
-    {
-        return buffer.getVertexFormat();
-    }
 }

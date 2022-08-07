@@ -14,16 +14,13 @@ import net.minecraft.nbt.FloatTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.client.model.data.IModelData;
+import net.minecraftforge.client.model.data.ModelData;
 import org.apache.commons.io.FilenameUtils;
 import org.lwjgl.opengl.GL11;
 import org.slf4j.Logger;
 
-import javax.annotation.Nullable;
 import java.io.File;
 import java.util.List;
-import java.util.Random;
 
 public class Utils
 {
@@ -33,7 +30,7 @@ public class Utils
             null, Direction.EAST, Direction.WEST, Direction.NORTH, Direction.SOUTH, Direction.UP, Direction.DOWN
     };
 
-    public static void dumpToOBJ(File file, String name, BakedModel model, @Nullable BlockState state, IModelData modelData)
+    public static void dumpToOBJ(File file, String name, BakedModel model)
     {
         OBJBuilder builder = OBJBuilder.begin();
 
@@ -51,7 +48,7 @@ public class Utils
             group.setMaterial(blockAtlas);
 
             rnd.setSeed(42);
-            for (BakedQuad quad : model.getQuads(state, dir, rnd, modelData))
+            for (BakedQuad quad : model.getQuads(null, dir, rnd, ModelData.EMPTY, null))
             {
                 group.addQuad(quad);
             }

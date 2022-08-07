@@ -10,11 +10,13 @@ public interface IBuilderVertex<
         V extends IBuilderVertex<B, P, G, F, V, M>,
         M extends IMaterial<M>>
 {
-    V position(float x, float y, float z);
+    V position(double x, double y, double z);
 
-    V tex(float u, float v);
+    V tex(double u, double v);
 
-    V normal(float x, float y, float z);
+    V normal(double x, double y, double z);
+
+    V color(double r, double g, double b, double a);
 
     V element(VertexFormatElement element, double... values);
 

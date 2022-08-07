@@ -108,12 +108,6 @@ public class VertexAccumulator extends DefaultedVertexConsumer implements Vertex
         index=(index+1)%primitiveLength;
     }
 
-    @Override
-    public VertexFormat getVertexFormat()
-    {
-        return vertexFormat;
-    }
-
     public static class VertexData
     {
         public Vec3 pos;

@@ -51,10 +51,9 @@ import net.minecraft.world.level.lighting.LevelLightEngine;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.phys.*;
-import net.minecraftforge.client.RenderProperties;
-import net.minecraftforge.client.model.ModelDataManager;
-import net.minecraftforge.client.model.data.EmptyModelData;
-import net.minecraftforge.client.model.data.IModelData;
+import net.minecraftforge.client.extensions.common.IClientItemExtensions;
+import net.minecraftforge.client.model.data.ModelData;
+import net.minecraftforge.client.model.data.ModelDataManager;
 import net.minecraftforge.entity.PartEntity;
 import net.minecraftforge.fml.loading.FMLPaths;
 import net.minecraftforge.registries.ForgeRegistries;
@@ -187,14 +186,14 @@ public class DumpCommand
         if (model.isCustomRenderer())
         {
             VertexDumper<SimpleMaterial> dumper = new VertexDumper<>(OBJBuilder.begin());
-            RenderProperties.get(stack.getItem()).getItemStackRenderer()
+            IClientItemExtensions.of(stack.getItem()).getCustomRenderer()
                     .renderByItem(stack, ItemTransforms.TransformType.FIXED, new PoseStack(), dumper, 0x00F000F0, OverlayTexture.NO_OVERLAY);
 
             return dumpVertexDumper(mc, dumper, folder, file);
         }
         else
         {
-            return dumpBakedModel(mc, model, folder, file, null, EmptyModelData.INSTANCE);
+            return dumpBakedModel(mc, model, folder, file);
         }
     }
 
@@ -202,11 +201,11 @@ public class DumpCommand
     {
         Minecraft mc = Minecraft.getInstance();
 
-        IModelData data = EmptyModelData.INSTANCE;
+        var data = ModelData.EMPTY;
         if (pos != null)
         {
-            data = ModelDataManager.getModelData(Objects.requireNonNull(mc.level), pos);
-            if (data == null) data = EmptyModelData.INSTANCE;
+            data = Objects.requireNonNull(Objects.requireNonNull(mc.level).getModelDataManager()).getAt(pos);
+            if (data == null) data = ModelData.EMPTY;
         }
 
         ResourceLocation regName = ForgeRegistries.BLOCKS.getKey(state.getBlock());
@@ -226,7 +225,10 @@ public class DumpCommand
             case MODEL:
                 if (!isCustomRenderer)
                 {
-                    mc.getBlockRenderer().renderSingleBlock(state, new PoseStack(), dumper, 0x00F000F0, OverlayTexture.NO_OVERLAY, data);
+                    for(var rt : RenderType.chunkBufferLayers())
+                    {
+                        mc.getBlockRenderer().renderSingleBlock(state, new PoseStack(), dumper, 0x00F000F0, OverlayTexture.NO_OVERLAY, data, rt);
+                    }
                 }
                 // fallthrough;
             case ENTITYBLOCK_ANIMATED:
@@ -298,7 +300,7 @@ public class DumpCommand
                 renderer.render(entity, 0, mc.getFrameTime(), new PoseStack(), dumper, 0x00F000F0);
             }
 
-            ResourceLocation regName = ForgeRegistries.ENTITIES.getKey(entity.getType());
+            ResourceLocation regName = ForgeRegistries.ENTITY_TYPES.getKey(entity.getType());
             if (regName == null)
                 throw new RuntimeException("EntityType registry name is null");
             Path folder = FMLPaths.GAMEDIR.get()
@@ -412,30 +414,28 @@ public class DumpCommand
 
                 BlockState blockstate1 = level.getBlockState(blockpos2);
                 FluidState fluidstate = blockstate1.getFluidState();
-                IModelData modelData = ModelDataManager.getModelData(mc.level, blockpos2);
-                if (modelData == null) modelData = EmptyModelData.INSTANCE;
-                for (RenderType rendertype : RenderType.chunkBufferLayers())
+                ModelData modelData = Objects.requireNonNull(Objects.requireNonNull(mc.level).getModelDataManager()).getAt(blockpos2);;
+                if (modelData == null) modelData = ModelData.EMPTY;
+                if (!fluidstate.isEmpty())
                 {
-                    net.minecraftforge.client.ForgeHooksClient.setRenderType(rendertype);
-                    if (!fluidstate.isEmpty() && ItemBlockRenderTypes.canRenderInLayer(fluidstate, rendertype))
-                    {
-                        posestack.pushPose();
-                        posestack.translate(blockpos2.getX() - (blockpos2.getX()&15), blockpos2.getY() - (blockpos2.getY()&15), blockpos2.getZ() - (blockpos2.getZ()&15));
-                        var consumer = new TransformingConsumer(dumper0.getBuffer(rendertype), posestack.last().pose(), posestack.last().normal());
-                        blockrenderdispatcher.renderLiquid(blockpos2, level, consumer, blockstate1, fluidstate);
-                        posestack.popPose();
-                    }
+                    posestack.pushPose();
+                    posestack.translate(blockpos2.getX() - (blockpos2.getX()&15), blockpos2.getY() - (blockpos2.getY()&15), blockpos2.getZ() - (blockpos2.getZ()&15));
+                    var consumer = new TransformingConsumer(dumper0.getBuffer(ItemBlockRenderTypes.getRenderLayer(fluidstate)), posestack.last().pose(), posestack.last().normal());
+                    blockrenderdispatcher.renderLiquid(blockpos2, level, consumer, blockstate1, fluidstate);
+                    posestack.popPose();
+                }
 
-                    if (blockstate.getRenderShape() != RenderShape.INVISIBLE && ItemBlockRenderTypes.canRenderInLayer(blockstate, rendertype))
+                if (blockstate.getRenderShape() != RenderShape.INVISIBLE)
+                {
+                    for (RenderType rendertype : RenderType.chunkBufferLayers())
                     {
                         posestack.pushPose();
                         posestack.translate(blockpos2.getX(), blockpos2.getY(), blockpos2.getZ());
-                        blockrenderdispatcher.renderBatched(blockstate, blockpos2, level, posestack, dumper0.getBuffer(rendertype), true, random, modelData);
+                        blockrenderdispatcher.renderBatched(blockstate, blockpos2, level, posestack, dumper0.getBuffer(rendertype), true, random, modelData, rendertype);
                         posestack.popPose();
                     }
                 }
             }
-            net.minecraftforge.client.ForgeHooksClient.setRenderType(null);
             dumper0.finish(textureDumper, "terrain");
 
             for (var entity : entities)
@@ -509,14 +509,14 @@ public class DumpCommand
         return 1;
     }
 
-    private static int dumpBakedModel(Minecraft mc, BakedModel model, Path folder, Path file, @Nullable BlockState state, IModelData data)
+    private static int dumpBakedModel(Minecraft mc, BakedModel model, Path folder, Path file)
     {
         File outFolder = folder.toFile();
         File outFile = file.toFile();
 
         //noinspection ResultOfMethodCallIgnored
         outFolder.mkdirs();
-        Utils.dumpToOBJ(outFile, "item", model, state, data);
+        Utils.dumpToOBJ(outFile, "item", model);
 
         showSuccessMessage(mc, outFolder, outFile);
         return 1;

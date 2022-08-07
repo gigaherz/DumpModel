@@ -238,19 +238,24 @@ public class OBJBuilder
                         this.indices0 = indices0;
                     }
 
-                    public Vertex position(float x, float y, float z)
+                    public Vertex position(double x, double y, double z)
                     {
                         return element(DefaultVertexFormat.ELEMENT_POSITION, x, y, z);
                     }
 
-                    public Vertex tex(float u, float v)
+                    public Vertex tex(double u, double v)
                     {
                         return element(DefaultVertexFormat.ELEMENT_UV0, u, v);
                     }
 
-                    public Vertex normal(float x, float y, float z)
+                    public Vertex normal(double x, double y, double z)
                     {
                         return element(DefaultVertexFormat.ELEMENT_NORMAL, x, y, z);
+                    }
+
+                    public Vertex color(double r, double g, double b, double a)
+                    {
+                        return element(DefaultVertexFormat.ELEMENT_COLOR, r, g, b, a);
                     }
 
                     public Vertex element(VertexFormatElement element, double... values)
