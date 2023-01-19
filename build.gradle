@@ -13,12 +13,12 @@ apply plugin: 'maven-publish'
 
 version = '1.7.0'
 group = 'dev.gigaherz.dumpmodel'
-archivesBaseName = 'DumpModel-1.19'
+archivesBaseName = 'DumpModel-1.19.3'
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 
 minecraft {
-    mappings channel: 'official', version: '1.19.2'
+    mappings channel: 'official', version: '1.19.3'
     
      accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
 
@@ -56,7 +56,7 @@ minecraft {
 }*/
 
 dependencies {
-    minecraft 'net.minecraftforge:forge:1.19.2-43.0.0'
+    minecraft 'net.minecraftforge:forge:1.19.3-44.0.7'
 
     //implementation 'com.github.javagl.JglTF:jgltf-impl-v2:master'
 }

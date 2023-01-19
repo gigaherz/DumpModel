@@ -14,7 +14,6 @@ import java.util.List;
 import java.util.Map;
 
 public class ModelMesh<T extends ModelBuilderBase<T>>
-        implements IModelMesh<T, ModelGroup<T>, ModelMesh<T>, ModelFace<T>, ModelFaceVertex<T>, ModelMaterial>
 {
     private final ModelGroup<T> parent;
     private final String name;
@@ -26,8 +25,8 @@ public class ModelMesh<T extends ModelBuilderBase<T>>
     {
         this.parent = parent;
         this.name = side != null
-                ? String.format("o_Side %s", side)
-                : String.format("o %s", name);
+                ? String.format("side_%s_%s", side, name)
+                : name;
     }
 
     public ModelGroup<T> parent()
@@ -55,7 +54,6 @@ public class ModelMesh<T extends ModelBuilderBase<T>>
         return faces;
     }
 
-    @Override
     public ModelMesh<T> setMaterial(ModelMaterial mat)
     {
         this.mat = mat;

@@ -3,66 +3,38 @@ package gigaherz.dumpmodel;
 import com.google.common.collect.Lists;
 import com.mojang.blaze3d.vertex.DefaultedVertexConsumer;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.blaze3d.vertex.VertexFormat;
-import com.mojang.math.Vector3f;
-import net.minecraft.util.FastColor;
+import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
+import org.joml.Vector3f;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 public class VertexAccumulator extends DefaultedVertexConsumer implements VertexConsumer
 {
     public final List<VertexData> vertices = Lists.newArrayList();
-    public final Set<Integer> colorsUsed = new HashSet<>();
-    private final VertexFormat vertexFormat;
     private final int primitiveLength;
+    private final BlockPos origin;
     private int index = 0;
-    private int currentPacked = -1;
-    private int currentR = -1;
-    private int currentG = -1;
-    private int currentB = -1;
-    private int currentA = -1;
     private VertexData current = new VertexData();
 
-    public VertexAccumulator(VertexFormat vertexFormat, int primitiveLength)
+    public VertexAccumulator(int primitiveLength, BlockPos origin)
     {
-        this.vertexFormat = vertexFormat;
         this.primitiveLength = primitiveLength;
+        this.origin = origin;
     }
 
     @Override
     public VertexConsumer vertex(double x, double y, double z)
     {
-        current.pos(x, y, z);
+        current.pos(x-origin.getX(), y-origin.getY(), z-origin.getZ());
         return this;
     }
 
     @Override
     public VertexConsumer color(int red, int green, int blue, int alpha)
     {
-        var packed = FastColor.ARGB32.color(red,green,blue,alpha);
-        if (index == 0)
-        {
-            currentR=red;
-            currentG=green;
-            currentB=blue;
-            currentA=alpha;
-            currentPacked = packed;
-            colorsUsed.add(packed);
-        }
-        else if (currentPacked != packed)
-        {
-            red= currentR;
-            green= currentG;
-            blue= currentB;
-            alpha= currentA;
-            packed = currentPacked;
-        }
-
-        current.color(red, green, blue, alpha, packed);
+        current.color(red, green, blue, alpha);
         return this;
     }
 
@@ -114,17 +86,15 @@ public class VertexAccumulator extends DefaultedVertexConsumer implements Vertex
         public float[] color;
         public Vec2[] uv = new Vec2[3];
         public Vector3f normal;
-        public int packedColor;
 
         public void pos(double x, double y, double z)
         {
             this.pos = new Vec3(x, y, z);
         }
 
-        public void color(int red, int green, int blue, int alpha, int packed)
+        public void color(int red, int green, int blue, int alpha)
         {
             this.color = new float[]{red, green, blue, alpha};
-            this.packedColor = packed;
         }
 
         public void tex(float u, float v)

@@ -5,9 +5,8 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import gigaherz.dumpmodel.builders.IModelBuilder;
-import gigaherz.dumpmodel.builders.OBJModelBuilder;
-import gigaherz.dumpmodel.builders.ModelMaterial;
+import gigaherz.dumpmodel.builders.DumperFactory;
+import gigaherz.dumpmodel.builders.ModelBuilderBase;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -31,7 +30,10 @@ import net.minecraft.commands.arguments.coordinates.BlockPosArgument;
 import net.minecraft.commands.arguments.item.ItemArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.network.chat.*;
+import net.minecraft.network.chat.ClickEvent;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.HoverEvent;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
@@ -57,7 +59,6 @@ import net.minecraftforge.fml.loading.FMLPaths;
 import net.minecraftforge.registries.ForgeRegistries;
 
 import javax.annotation.Nullable;
-import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
@@ -67,12 +68,22 @@ import java.util.function.Function;
 
 public class DumpCommand
 {
+    public static DumperFactory<?> factory = DumperFactory.OBJ;
+
     public static void init(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext buildContext)
     {
         dispatcher.register(
                 LiteralArgumentBuilder.<CommandSourceStack>literal("dumpmodel")
                         .then(Commands.literal("atlas")
                                 .executes((ctx) -> dumpBlockAtlas())
+                        )
+                        .then(Commands.literal("format")
+                                .then(Commands.literal("obj")
+                                        .executes((ctx) -> { factory = DumperFactory.OBJ; return 0; })
+                                )
+                                .then(Commands.literal("usd")
+                                        .executes((ctx) -> { factory = DumperFactory.USD; return 0; })
+                                )
                         )
                         .then(Commands.literal("held")
                                 .executes((ctx) -> dumpHeldItem(InteractionHand.MAIN_HAND))
@@ -114,11 +125,11 @@ public class DumpCommand
     {
         Minecraft mc = Minecraft.getInstance();
         Path folder = FMLPaths.GAMEDIR.get().resolve("models");
-        File file = folder.resolve("atlas.png").toFile();
+        Path file = folder.resolve("atlas.png");
 
-        Utils.dumpTexture(TextureAtlas.LOCATION_BLOCKS, file.getAbsoluteFile());
+        Utils.dumpTexture(TextureAtlas.LOCATION_BLOCKS, file);
 
-        showSuccessMessage(mc, folder.toFile(), file, "Texture");
+        showSuccessMessage(mc, folder, file, "Texture");
         return 1;
     }
 
@@ -173,16 +184,16 @@ public class DumpCommand
         if (stack.hasTag())
         {
             folder = folder.resolve(regName.getPath());
-            file = folder.resolve(Objects.requireNonNull(stack.getTag()).hashCode() + ".obj");
+            file = folder.resolve(Objects.requireNonNull(stack.getTag()).hashCode() + factory.extension());
         }
         else
         {
-            file = folder.resolve(regName.getPath() + ".obj");
+            file = folder.resolve(regName.getPath() + factory.extension());
         }
 
         if (model.isCustomRenderer())
         {
-            VertexDumper<ModelMaterial> dumper = new VertexDumper<>(OBJModelBuilder.begin());
+            VertexDumper dumper = new VertexDumper(factory.create());
             IClientItemExtensions.of(stack.getItem()).getCustomRenderer()
                     .renderByItem(stack, ItemTransforms.TransformType.FIXED, new PoseStack(), dumper, 0x00F000F0, OverlayTexture.NO_OVERLAY);
 
@@ -211,9 +222,9 @@ public class DumpCommand
         Path folder = FMLPaths.GAMEDIR.get()
                 .resolve("models/blocks")
                 .resolve(regName.getNamespace());
-        Path file = folder.resolve(regName.getPath() + ".obj");
+        Path file = folder.resolve(regName.getPath() + factory.extension());
 
-        VertexDumper<ModelMaterial> dumper = new VertexDumper<>(OBJModelBuilder.begin());
+        VertexDumper dumper = new VertexDumper(factory.create());
         BakedModel model = mc.getBlockRenderer().getBlockModelShaper().getBlockModel(state);
         RenderShape renderShape = state.getRenderShape();
         boolean isCustomRenderer = model.isCustomRenderer();
@@ -278,7 +289,7 @@ public class DumpCommand
             if (mc.player == null || mc.level == null)
                 return 0;
 
-            VertexDumper<ModelMaterial> dumper = new VertexDumper<>(OBJModelBuilder.begin());
+            VertexDumper dumper = new VertexDumper(factory.create());
 
             if (entity instanceof EnderDragonPart dragonPart)
             {
@@ -303,7 +314,7 @@ public class DumpCommand
             Path folder = FMLPaths.GAMEDIR.get()
                     .resolve("models/entities")
                     .resolve(regName.getNamespace());
-            Path file = folder.resolve(regName.getPath() + ".obj");
+            Path file = folder.resolve(regName.getPath() + factory.extension());
 
             return dumpVertexDumper(mc, dumper, folder, file);
         }
@@ -361,7 +372,7 @@ public class DumpCommand
                     .resolve("models/scenes");
             //noinspection ResultOfMethodCallIgnored
             folder.toFile().mkdirs();
-            outPath = folder.resolve("scene_" + timestamp + ".obj");
+            outPath = folder.resolve("scene_" + timestamp + factory.extension());
             timestamp++;
         } while (Files.exists(outPath));
 
@@ -376,13 +387,14 @@ public class DumpCommand
             var minP = new BlockPos(aabb.minX, aabb.minY, aabb.minZ);
             var maxP = new BlockPos(Mth.ceil(aabb.maxX), Mth.ceil(aabb.maxY), Mth.ceil(aabb.maxZ));
 
-            var builder = OBJModelBuilder.begin();
+            var builder = factory.create();
 
             var posestack = new PoseStack();
 
-            var dumper0 = new VertexDumper<>(builder, true);
+            var dumper0 = new VertexDumper(builder, true);
+            dumper0.setOrigin(minP);
 
-            var outFile = outPath.toFile();
+            var outFile = outPath;
             var textures = new HashMap<ResourceLocation, String>();
             Function<ResourceLocation, String> textureDumper = tx ->
                     textures.computeIfAbsent(tx, tex -> Utils.dumpTexture(outFile, tx).getAbsolutePath());
@@ -437,7 +449,8 @@ public class DumpCommand
 
             for (var entity : entities)
             {
-                var dumper = new VertexDumper<>(builder);
+                var dumper = new VertexDumper(builder);
+                dumper.setOrigin(minP);
 
                 posestack.pushPose();
                 posestack.translate(entity.getX(), entity.getY(), entity.getZ());
@@ -456,7 +469,8 @@ public class DumpCommand
 
             for (var be : blockEntities)
             {
-                var dumper = new VertexDumper<>(builder);
+                var dumper = new VertexDumper(builder);
+                dumper.setOrigin(minP);
 
                 var pos = be.getBlockPos();
 
@@ -482,56 +496,50 @@ public class DumpCommand
         }
     }
 
-    private static int dumpVertexDumper(Minecraft mc, VertexDumper<?> dumper, Path folder, Path file)
+    private static int dumpVertexDumper(Minecraft mc, VertexDumper dumper, Path folder, Path file)
     {
         var textures = new HashMap<ResourceLocation, String>();
         Function<ResourceLocation, String> textureDumper = tx ->
-                textures.computeIfAbsent(tx, tex -> Utils.dumpTexture(file.toFile(), tx).getAbsolutePath());
+                textures.computeIfAbsent(tx, tex -> Utils.dumpTexture(file, tx).getAbsolutePath());
         dumper.finish(textureDumper, "object1");
 
         return dumpBuilder(mc, dumper.builder, folder, file);
     }
 
-    private static int dumpBuilder(Minecraft mc, IModelBuilder<?, ?, ?, ?, ?, ?> builder, Path folder, Path file)
+    private static int dumpBuilder(Minecraft mc, ModelBuilderBase<?> builder, Path folder, Path file)
     {
-        File outFolder = folder.toFile();
-        File outFile = file.toFile();
-
         //noinspection ResultOfMethodCallIgnored
-        outFolder.mkdirs();
+        folder.toFile().mkdirs();
 
-        builder.save(outFile);
+        builder.save(file);
 
-        showSuccessMessage(mc, outFolder, outFile);
+        showSuccessMessage(mc, folder, file);
         return 1;
     }
 
     private static int dumpBakedModel(Minecraft mc, BakedModel model, Path folder, Path file)
     {
-        File outFolder = folder.toFile();
-        File outFile = file.toFile();
-
         //noinspection ResultOfMethodCallIgnored
-        outFolder.mkdirs();
-        Utils.dumpToOBJ(outFile, "item", model);
+        folder.toFile().mkdirs();
+        Utils.dumpToOBJ(file, "item", model);
 
-        showSuccessMessage(mc, outFolder, outFile);
+        showSuccessMessage(mc, folder, file);
         return 1;
     }
 
-    private static void showSuccessMessage(Minecraft mc, File outFolder, File outFile)
+    private static void showSuccessMessage(Minecraft mc, Path outFolder, Path outFile)
     {
         showSuccessMessage(mc, outFolder, outFile, "Model");
     }
 
-    private static void showSuccessMessage(Minecraft mc, File outFolder, File outFile, String what)
+    private static void showSuccessMessage(Minecraft mc, Path outFolder, Path outFile, String what)
     {
-        MutableComponent pathComponent = Component.literal(outFile.getAbsolutePath());
+        MutableComponent pathComponent = Component.literal(outFile.toFile().getAbsolutePath());
         pathComponent = pathComponent.withStyle(style -> style
                 .withUnderlined(true)
                 .withColor(ChatFormatting.GREEN)
                 .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("Click to open folder")))
-                .withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_FILE, outFolder.getAbsolutePath())));
+                .withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_FILE, outFolder.toFile().getAbsolutePath())));
         mc.gui.getChat().addMessage(Component.literal(what + " dumped to ").append(pathComponent));
     }
 

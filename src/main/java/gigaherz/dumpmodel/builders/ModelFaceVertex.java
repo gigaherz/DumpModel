@@ -8,7 +8,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ModelFaceVertex<T extends ModelBuilderBase<T>>
-        implements IModelFaceVertex<T, ModelGroup<T>, ModelMesh<T>, ModelFace<T>, ModelFaceVertex<T>, ModelMaterial>
 {
     private final ModelFace<T> parent;
     private final Map<VertexFormatElement, Integer> indices = new HashMap<>();

@@ -5,23 +5,24 @@ import com.mojang.blaze3d.vertex.VertexFormatElement;
 import org.apache.commons.io.FilenameUtils;
 
 import java.io.*;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public class OBJModelBuilder extends ModelBuilderBase<OBJModelBuilder>
+public class ObjModelBuilder extends ModelBuilderBase<ObjModelBuilder>
 {
-    public static OBJModelBuilder begin()
+    public static ObjModelBuilder begin()
     {
-        return new OBJModelBuilder();
+        return new ObjModelBuilder();
     }
 
-    private OBJModelBuilder()
+    private ObjModelBuilder()
     {
     }
 
-    private String formatIndices(ModelFaceVertex<OBJModelBuilder> vtx)
+    private String formatIndices(ModelFaceVertex<ObjModelBuilder> vtx)
     {
         boolean hasP = vtx.indices().containsKey(DefaultVertexFormat.ELEMENT_POSITION);
         boolean hasT = vtx.indices().containsKey(DefaultVertexFormat.ELEMENT_UV0);
@@ -33,14 +34,14 @@ public class OBJModelBuilder extends ModelBuilderBase<OBJModelBuilder>
         return str;
     }
 
-    public void save(File file)
+    public void save(Path file)
     {
-        var pathWithoutExtension = FilenameUtils.removeExtension(file.getAbsolutePath());
+        var pathWithoutExtension = FilenameUtils.removeExtension(file.toFile().getAbsolutePath());
         var matLib = pathWithoutExtension + ".mtl";
 
         var matLibName = FilenameUtils.getName(matLib);
 
-        try (OutputStream output = new FileOutputStream(file);
+        try (OutputStream output = new FileOutputStream(file.toFile());
              OutputStreamWriter writer = new OutputStreamWriter(output))
         {
             if (materialLibrary().size() > 0)
@@ -133,14 +134,18 @@ public class OBJModelBuilder extends ModelBuilderBase<OBJModelBuilder>
                     {
                         writer.write(String.format("map_Kd %s\n", mat.texture()));
                     }
-                    else if (mat.r() != 1 || mat.g() != 1 || mat.b() != 1)
+                    else
+                    {
+                        writer.write("Kd 1 1 1\n");
+                    }
+                    /*else if (mat.r() != 1 || mat.g() != 1 || mat.b() != 1)
                     {
                         writer.write(String.format("Kd %s %s %s\n", mat.r(), mat.g(), mat.b()));
                     }
                     if (mat.a() != 1)
                     {
                         writer.write(String.format("opacity %s\n", mat.a()));
-                    }
+                    }*/
                     writer.write("\n");
                 }
             }

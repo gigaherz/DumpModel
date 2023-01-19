@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ModelGroup<T extends ModelBuilderBase<T>>
-        implements IModelGroup<T, ModelGroup<T>, ModelMesh<T>, ModelFace<T>, ModelFaceVertex<T>, ModelMaterial>
 {
     private final ModelBuilderBase<T> parent;
     private final String name;

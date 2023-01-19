@@ -5,7 +5,6 @@ import com.google.common.collect.Lists;
 import java.util.List;
 
 public class ModelFace<T extends ModelBuilderBase<T>>
-        implements IModelFace<T, ModelGroup<T>, ModelMesh<T>, ModelFace<T>, ModelFaceVertex<T>, ModelMaterial>
 {
     private final ModelMesh<T> parent;
     private List<ModelFaceVertex<T>> vertices = Lists.newArrayList();

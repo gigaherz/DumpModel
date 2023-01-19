@@ -4,9 +4,7 @@ import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.VertexFormatElement;
 import com.mojang.logging.LogUtils;
-import gigaherz.dumpmodel.builders.ModelGroup;
-import gigaherz.dumpmodel.builders.ModelMesh;
-import gigaherz.dumpmodel.builders.OBJModelBuilder;
+import gigaherz.dumpmodel.builders.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.texture.TextureAtlas;
@@ -22,6 +20,7 @@ import org.lwjgl.opengl.GL11;
 import org.slf4j.Logger;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.List;
 
 public class Utils
@@ -32,20 +31,22 @@ public class Utils
             null, Direction.EAST, Direction.WEST, Direction.NORTH, Direction.SOUTH, Direction.UP, Direction.DOWN
     };
 
-    public static void dumpToOBJ(File file, String name, BakedModel model)
+    public static void dumpToOBJ(Path file, String name, BakedModel model)
     {
-        OBJModelBuilder builder = OBJModelBuilder.begin();
+        ModelBuilderBase<?> builder = DumpCommand.factory.create();
 
         var textureFile = dumpTexture(file, TextureAtlas.LOCATION_BLOCKS);
 
         var blockAtlas = builder.newMaterial(textureFile.getAbsolutePath());
 
-        ModelGroup part = builder.part(name);
+        var part
+                = builder.part(name);
 
         RandomSource rnd = RandomSource.create();
         for (Direction dir : DIRECTIONS)
         {
-            ModelMesh group = part.group(dir);
+            var group
+                    = part.group(dir);
 
             group.setMaterial(blockAtlas);
 
@@ -59,18 +60,18 @@ public class Utils
         builder.save(file);
     }
 
-    public static File dumpTexture(File parentName, ResourceLocation texture)
+    public static File dumpTexture(Path parentName, ResourceLocation texture)
     {
-        var textureFolder = new File(FilenameUtils.removeExtension(parentName.getAbsolutePath()) + "_textures");
+        var textureFolder = new File(FilenameUtils.removeExtension(parentName.toFile().getAbsolutePath()) + "_textures");
         textureFolder.mkdirs();
         var textureFile = new File(textureFolder, texture.toString().replace(":","_").replace("/","_") + ".png");
 
-        dumpTexture(texture, textureFile);
+        dumpTexture(texture, textureFile.toPath());
 
         return textureFile;
     }
 
-    public static void dumpTexture(ResourceLocation texture, File target)
+    public static void dumpTexture(ResourceLocation texture, Path target)
     {
         try (NativeImage nativeimage = downloadTexture(texture))
         {
