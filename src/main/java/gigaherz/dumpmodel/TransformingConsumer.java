@@ -1,9 +1,8 @@
 package gigaherz.dumpmodel;
 
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.blaze3d.vertex.VertexFormat;
-import com.mojang.math.Matrix3f;
-import com.mojang.math.Matrix4f;
+import org.joml.Matrix3f;
+import org.joml.Matrix4f;
 
 public class TransformingConsumer implements VertexConsumer
 {
