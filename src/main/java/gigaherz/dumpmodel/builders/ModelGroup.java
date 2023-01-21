@@ -6,19 +6,19 @@ import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ModelGroup<T extends ModelBuilderBase<T>>
+public class ModelGroup<T extends ModelWriter<T>>
 {
-    private final ModelBuilderBase<T> parent;
+    private final ModelWriter<T> parent;
     private final String name;
     private final List<ModelMesh<T>> groups = new ArrayList<>();
 
-    ModelGroup(ModelBuilderBase<T> parent, String name)
+    ModelGroup(ModelWriter<T> parent, String name)
     {
         this.parent = parent;
         this.name = name;
     }
 
-    public ModelBuilderBase<T> parent()
+    public ModelWriter<T> parent()
     {
         return parent;
     }

@@ -11,18 +11,18 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public class ObjModelBuilder extends ModelBuilderBase<ObjModelBuilder>
+public class ObjModelWriter extends ModelWriter<ObjModelWriter>
 {
-    public static ObjModelBuilder begin()
+    public static ObjModelWriter begin()
     {
-        return new ObjModelBuilder();
+        return new ObjModelWriter();
     }
 
-    private ObjModelBuilder()
+    private ObjModelWriter()
     {
     }
 
-    private String formatIndices(ModelFaceVertex<ObjModelBuilder> vtx)
+    private String formatIndices(ModelFaceVertex<ObjModelWriter> vtx)
     {
         boolean hasP = vtx.indices().containsKey(DefaultVertexFormat.ELEMENT_POSITION);
         boolean hasT = vtx.indices().containsKey(DefaultVertexFormat.ELEMENT_UV0);
@@ -91,7 +91,7 @@ public class ObjModelBuilder extends ModelBuilderBase<ObjModelBuilder>
                     for(int i=ct; i<rt;i++)
                     {
                         var vt = elementDatas().get(DefaultVertexFormat.ELEMENT_UV0).get(i);
-                        writer.write(String.format("vt %f %f\n", vt[0], vt[1]));
+                        writer.write(String.format("vt %f %f\n", vt[0], 1-vt[1]));
                     }
                     counts.put(DefaultVertexFormat.ELEMENT_UV0, rp);
 

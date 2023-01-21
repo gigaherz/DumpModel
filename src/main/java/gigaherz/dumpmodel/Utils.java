@@ -17,6 +17,7 @@ import net.minecraft.util.RandomSource;
 import net.minecraftforge.client.model.data.ModelData;
 import org.apache.commons.io.FilenameUtils;
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.stb.STBImageWrite;
 import org.slf4j.Logger;
 
 import java.io.File;
@@ -33,11 +34,11 @@ public class Utils
 
     public static void dumpToOBJ(Path file, String name, BakedModel model)
     {
-        ModelBuilderBase<?> builder = DumpCommand.factory.create();
+        ModelWriter<?> builder = DumpCommand.factory.create();
 
         var textureFile = dumpTexture(file, TextureAtlas.LOCATION_BLOCKS);
 
-        var blockAtlas = builder.newMaterial(textureFile.getAbsolutePath());
+        var blockAtlas = builder.newMaterial(textureFile.getAbsolutePath(), AlphaMode.BLEND);
 
         var part
                 = builder.part(name);
@@ -89,8 +90,8 @@ public class Utils
         int width = GL11.glGetTexLevelParameteri(GL11.GL_TEXTURE_2D, 0, GL11.GL_TEXTURE_WIDTH);
         int height = GL11.glGetTexLevelParameteri(GL11.GL_TEXTURE_2D, 0, GL11.GL_TEXTURE_HEIGHT);
         NativeImage nativeimage = new NativeImage(width, height, false);
-        nativeimage.downloadTexture(0, true);
-        nativeimage.flipY();
+        nativeimage.downloadTexture(0, false);
+        //nativeimage.flipY();
         return nativeimage;
     }
 

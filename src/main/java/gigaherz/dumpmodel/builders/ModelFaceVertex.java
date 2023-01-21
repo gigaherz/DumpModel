@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-public class ModelFaceVertex<T extends ModelBuilderBase<T>>
+public class ModelFaceVertex<T extends ModelWriter<T>>
 {
     private final ModelFace<T> parent;
     private final Map<VertexFormatElement, Integer> indices = new HashMap<>();

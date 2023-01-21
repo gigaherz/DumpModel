@@ -8,14 +8,14 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.stream.Collectors;
 
-public class UsdModelBuilder extends ModelBuilderBase<UsdModelBuilder>
+public class UsdModelWriter extends ModelWriter<UsdModelWriter>
 {
-    public static UsdModelBuilder begin()
+    public static UsdModelWriter begin()
     {
-        return new UsdModelBuilder();
+        return new UsdModelWriter();
     }
 
-    private UsdModelBuilder()
+    private UsdModelWriter()
     {
     }
 

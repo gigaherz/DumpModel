@@ -4,7 +4,7 @@ import com.google.common.collect.Lists;
 
 import java.util.List;
 
-public class ModelFace<T extends ModelBuilderBase<T>>
+public class ModelFace<T extends ModelWriter<T>>
 {
     private final ModelMesh<T> parent;
     private List<ModelFaceVertex<T>> vertices = Lists.newArrayList();

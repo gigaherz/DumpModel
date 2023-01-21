@@ -8,7 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public abstract class ModelBuilderBase<T extends ModelBuilderBase<T>>
+public abstract class ModelWriter<T extends ModelWriter<T>>
 {
     private final Map<VertexFormatElement, List<double[]>> elementDatas = new HashMap<>();
     private final Map<String, ModelMaterial> materialLibrary = new HashMap<>();
@@ -24,11 +24,11 @@ public abstract class ModelBuilderBase<T extends ModelBuilderBase<T>>
 
     public abstract void save(Path outFile);
 
-    public ModelMaterial newMaterial(String tex)
+    public ModelMaterial newMaterial(String tex, AlphaMode mode)
     {
         return texToMaterial.computeIfAbsent(tex, tx -> {
             var autoname = "Mat_" + materialLibrary.size();
-            var mat = new ModelMaterial(autoname, tex);
+            var mat = new ModelMaterial(autoname, tex, mode);
             materialLibrary.put(autoname, mat);
             return mat;
         });

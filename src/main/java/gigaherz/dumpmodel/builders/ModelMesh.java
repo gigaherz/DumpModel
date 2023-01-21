@@ -13,7 +13,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class ModelMesh<T extends ModelBuilderBase<T>>
+public class ModelMesh<T extends ModelWriter<T>>
 {
     private final ModelGroup<T> parent;
     private final String name;

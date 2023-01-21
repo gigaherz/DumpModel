@@ -6,7 +6,7 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import gigaherz.dumpmodel.builders.DumperFactory;
-import gigaherz.dumpmodel.builders.ModelBuilderBase;
+import gigaherz.dumpmodel.builders.ModelWriter;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -83,6 +83,9 @@ public class DumpCommand
                                 )
                                 .then(Commands.literal("usd")
                                         .executes((ctx) -> { factory = DumperFactory.USD; return 0; })
+                                )
+                                .then(Commands.literal("gltf")
+                                        .executes((ctx) -> { factory = DumperFactory.GLTF; return 0; })
                                 )
                         )
                         .then(Commands.literal("held")
@@ -506,7 +509,7 @@ public class DumpCommand
         return dumpBuilder(mc, dumper.builder, folder, file);
     }
 
-    private static int dumpBuilder(Minecraft mc, ModelBuilderBase<?> builder, Path folder, Path file)
+    private static int dumpBuilder(Minecraft mc, ModelWriter<?> builder, Path folder, Path file)
     {
         //noinspection ResultOfMethodCallIgnored
         folder.toFile().mkdirs();
