@@ -60,7 +60,7 @@ public class VertexDumper implements MultiBufferSource
     {
         ModelGroup<?> partBuilder = builder.part(name);
 
-        Map<ResourceLocation, ModelMaterial> materials = new HashMap<>();
+        Map<Pair<ResourceLocation,AlphaMode>, ModelMaterial> materials = new HashMap<>();
 
         int partNumber = 0;
         for (Pair<RenderType, VertexAccumulator> part : parts)
@@ -88,7 +88,7 @@ public class VertexDumper implements MultiBufferSource
             if (texture != null)
             {
                 var mode1 = mode;
-                var texName = materials.computeIfAbsent(texture, tx -> {
+                var texName = materials.computeIfAbsent(Pair.of(texture, mode), tx -> {
                     var path = textureDumper.apply(texture);
 
                     return builder.newMaterial(path, mode1);

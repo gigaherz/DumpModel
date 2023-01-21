@@ -1,6 +1,8 @@
 package gigaherz.dumpmodel.builders;
 
 import com.mojang.blaze3d.vertex.VertexFormatElement;
+import com.mojang.datafixers.util.Pair;
+import net.minecraft.resources.ResourceLocation;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -12,7 +14,7 @@ public abstract class ModelWriter<T extends ModelWriter<T>>
 {
     private final Map<VertexFormatElement, List<double[]>> elementDatas = new HashMap<>();
     private final Map<String, ModelMaterial> materialLibrary = new HashMap<>();
-    private final Map<String, ModelMaterial> texToMaterial = new HashMap<>();
+    private final Map<Pair<String,AlphaMode>, ModelMaterial> texToMaterial = new HashMap<>();
     private final List<ModelGroup<T>> groups = new ArrayList<>();
 
     public ModelGroup<T> part(String name)
@@ -26,7 +28,7 @@ public abstract class ModelWriter<T extends ModelWriter<T>>
 
     public ModelMaterial newMaterial(String tex, AlphaMode mode)
     {
-        return texToMaterial.computeIfAbsent(tex, tx -> {
+        return texToMaterial.computeIfAbsent(Pair.of(tex,mode), tx -> {
             var autoname = "Mat_" + materialLibrary.size();
             var mat = new ModelMaterial(autoname, tex, mode);
             materialLibrary.put(autoname, mat);
