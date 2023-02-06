@@ -2,6 +2,7 @@ package gigaherz.dumpmodel.builders;
 
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormatElement;
+import gigaherz.dumpmodel.builders.writers.ModelWriter;
 
 import java.util.ArrayList;
 import java.util.HashMap;

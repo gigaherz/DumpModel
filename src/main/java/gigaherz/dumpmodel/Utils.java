@@ -5,6 +5,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.VertexFormatElement;
 import com.mojang.logging.LogUtils;
 import gigaherz.dumpmodel.builders.*;
+import gigaherz.dumpmodel.builders.writers.ModelWriter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.texture.TextureAtlas;
@@ -17,7 +18,6 @@ import net.minecraft.util.RandomSource;
 import net.minecraftforge.client.model.data.ModelData;
 import org.apache.commons.io.FilenameUtils;
 import org.lwjgl.opengl.GL11;
-import org.lwjgl.stb.STBImageWrite;
 import org.slf4j.Logger;
 
 import java.io.File;
@@ -34,11 +34,11 @@ public class Utils
 
     public static void dumpToOBJ(Path file, String name, BakedModel model)
     {
-        ModelWriter<?> builder = DumpCommand.factory.create();
+        ModelWriter<?> builder = WriterFactory.getActiveFactory().create();
 
         var textureFile = dumpTexture(file, TextureAtlas.LOCATION_BLOCKS);
 
-        var blockAtlas = builder.newMaterial(textureFile.getAbsolutePath(), AlphaMode.BLEND);
+        var blockAtlas = builder.newMaterial(new BasicMaterial(textureFile.getAbsolutePath(), AlphaMode.BLEND, false));
 
         var part
                 = builder.part(name);

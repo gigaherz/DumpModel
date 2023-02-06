@@ -1,8 +1,11 @@
-package gigaherz.dumpmodel.builders;
+package gigaherz.dumpmodel.builders.writers;
 
 import com.mojang.blaze3d.vertex.VertexFormatElement;
 import com.mojang.datafixers.util.Pair;
-import net.minecraft.resources.ResourceLocation;
+import gigaherz.dumpmodel.builders.AlphaMode;
+import gigaherz.dumpmodel.builders.BasicMaterial;
+import gigaherz.dumpmodel.builders.ModelGroup;
+import gigaherz.dumpmodel.builders.NamedMaterial;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -13,8 +16,8 @@ import java.util.Map;
 public abstract class ModelWriter<T extends ModelWriter<T>>
 {
     private final Map<VertexFormatElement, List<double[]>> elementDatas = new HashMap<>();
-    private final Map<String, ModelMaterial> materialLibrary = new HashMap<>();
-    private final Map<Pair<String,AlphaMode>, ModelMaterial> texToMaterial = new HashMap<>();
+    private final Map<String, NamedMaterial> materialLibrary = new HashMap<>();
+    private final Map<BasicMaterial, NamedMaterial> texToMaterial = new HashMap<>();
     private final List<ModelGroup<T>> groups = new ArrayList<>();
 
     public ModelGroup<T> part(String name)
@@ -26,13 +29,13 @@ public abstract class ModelWriter<T extends ModelWriter<T>>
 
     public abstract void save(Path outFile);
 
-    public ModelMaterial newMaterial(String tex, AlphaMode mode)
+    public NamedMaterial newMaterial(BasicMaterial mat)
     {
-        return texToMaterial.computeIfAbsent(Pair.of(tex,mode), tx -> {
+        return texToMaterial.computeIfAbsent(mat, tx -> {
             var autoname = "Mat_" + materialLibrary.size();
-            var mat = new ModelMaterial(autoname, tex, mode);
-            materialLibrary.put(autoname, mat);
-            return mat;
+            var mat1 = new NamedMaterial(autoname, mat);
+            materialLibrary.put(autoname, mat1);
+            return mat1;
         });
     }
 
@@ -41,7 +44,7 @@ public abstract class ModelWriter<T extends ModelWriter<T>>
         return elementDatas;
     }
 
-    public Map<String, ModelMaterial> materialLibrary()
+    public Map<String, NamedMaterial> materialLibrary()
     {
         return materialLibrary;
     }

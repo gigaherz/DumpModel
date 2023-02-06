@@ -1,6 +1,7 @@
 package gigaherz.dumpmodel.builders;
 
 import com.google.common.collect.Lists;
+import gigaherz.dumpmodel.builders.writers.ModelWriter;
 
 import java.util.List;
 

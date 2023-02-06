@@ -1,7 +1,8 @@
-package gigaherz.dumpmodel.builders;
+package gigaherz.dumpmodel.builders.writers;
 
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormatElement;
+import gigaherz.dumpmodel.builders.ModelFaceVertex;
 import org.apache.commons.io.FilenameUtils;
 
 import java.io.*;
@@ -130,9 +131,9 @@ public class ObjModelWriter extends ModelWriter<ObjModelWriter>
                 for(var mat : materialLibrary().values())
                 {
                     writer.write(String.format("newmtl %s\n", mat.name()));
-                    if (mat.texture() != null)
+                    if (mat.mat().texture() != null)
                     {
-                        writer.write(String.format("map_Kd %s\n", mat.texture()));
+                        writer.write(String.format("map_Kd %s\n", mat.mat().texture()));
                     }
                     else
                     {

@@ -4,6 +4,7 @@ import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormatElement;
 import gigaherz.dumpmodel.Utils;
+import gigaherz.dumpmodel.builders.writers.ModelWriter;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.core.Direction;
 
@@ -17,7 +18,7 @@ public class ModelMesh<T extends ModelWriter<T>>
 {
     private final ModelGroup<T> parent;
     private final String name;
-    private ModelMaterial mat;
+    private NamedMaterial mat;
     private final Map<VertexFormatElement, Integer> requireElements = new HashMap<>();
     private final List<ModelFace<T>> faces = new ArrayList<>();
 
@@ -39,7 +40,7 @@ public class ModelMesh<T extends ModelWriter<T>>
         return name;
     }
 
-    public ModelMaterial material()
+    public NamedMaterial material()
     {
         return mat;
     }
@@ -54,7 +55,7 @@ public class ModelMesh<T extends ModelWriter<T>>
         return faces;
     }
 
-    public ModelMesh<T> setMaterial(ModelMaterial mat)
+    public ModelMesh<T> setMaterial(NamedMaterial mat)
     {
         this.mat = mat;
         return this;

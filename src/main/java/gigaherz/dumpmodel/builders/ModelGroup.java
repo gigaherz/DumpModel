@@ -1,5 +1,6 @@
 package gigaherz.dumpmodel.builders;
 
+import gigaherz.dumpmodel.builders.writers.ModelWriter;
 import net.minecraft.core.Direction;
 
 import javax.annotation.Nullable;
@@ -12,7 +13,7 @@ public class ModelGroup<T extends ModelWriter<T>>
     private final String name;
     private final List<ModelMesh<T>> groups = new ArrayList<>();
 
-    ModelGroup(ModelWriter<T> parent, String name)
+    public ModelGroup(ModelWriter<T> parent, String name)
     {
         this.parent = parent;
         this.name = name;

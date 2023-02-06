@@ -1,4 +1,4 @@
-package gigaherz.dumpmodel.builders;
+package gigaherz.dumpmodel.builders.writers;
 
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 
@@ -179,7 +179,7 @@ public class UsdModelWriter extends ModelWriter<UsdModelWriter>
             writer.write("            {\n");
             writer.write("                uniform token info:id = \"UsdUVTexture\"\n");
 
-            var tx = file.getParent().relativize(Paths.get(mat.texture()));
+            var tx = file.getParent().relativize(Paths.get(mat.mat().texture()));
 
             writer.write("                asset inputs:file = @."+File.separator+tx.toString()+"@\n");
             writer.write("                token inputs:sourceColorSpace = \"sRGB\"\n");

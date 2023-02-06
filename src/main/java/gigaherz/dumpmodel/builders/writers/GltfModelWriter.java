@@ -1,8 +1,11 @@
-package gigaherz.dumpmodel.builders;
+package gigaherz.dumpmodel.builders.writers;
 
 import com.google.gson.*;
 import com.google.gson.stream.JsonWriter;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+import gigaherz.dumpmodel.builders.AlphaMode;
+import gigaherz.dumpmodel.builders.ModelGroup;
+import gigaherz.dumpmodel.builders.ModelMesh;
 import io.netty.buffer.ByteBufUtil;
 import io.netty.buffer.Unpooled;
 import org.lwjgl.opengl.GL11;
@@ -58,6 +61,7 @@ public class GltfModelWriter extends ModelWriter<GltfModelWriter>
         var images = new JsonArray();
         obj.add("images", images);
 
+        var imageMap = new HashMap<String, Integer>();
         var materialMap = new HashMap<String, Integer>();
         for(var entry : materialLibrary().entrySet())
         {
@@ -67,7 +71,7 @@ public class GltfModelWriter extends ModelWriter<GltfModelWriter>
 
             var material = new JsonObject();
             materials.add(material);
-            switch(mat0.alphaMode())
+            switch(mat0.mat().alphaMode())
             {
                 case OPAQUE: break;
                 case CUTOUT:
@@ -78,7 +82,7 @@ public class GltfModelWriter extends ModelWriter<GltfModelWriter>
                     material.addProperty("alphaMode", "BLEND");
                     break;
             }
-            material.addProperty("doubleSided", true);
+            material.addProperty("doubleSided", mat0.mat().doubleSided());
             material.addProperty("name", entry.getKey());
 
             var pbrMetallicRoughness = new JsonObject();
@@ -87,26 +91,30 @@ public class GltfModelWriter extends ModelWriter<GltfModelWriter>
             var baseColorTexture = new JsonObject();
             pbrMetallicRoughness.add("baseColorTexture", baseColorTexture);
 
-            baseColorTexture.addProperty("index", images.size());
+            baseColorTexture.addProperty("index", imageMap.computeIfAbsent(mat0.mat().texture(), tx -> {
+                var imageIndex = images.size();
+
+                var texture = new JsonObject();
+                textures.add(texture);
+                texture.addProperty("sampler", 0);
+                texture.addProperty("source", images.size());
+
+                var image = new JsonObject();
+                images.add(image);
+                image.addProperty("mimeType", "image/png");
+                image.addProperty("name", "brush" + images.size());
+
+                var texPath = Paths.get(mat0.mat().texture());
+
+                var rel = file.getParent().relativize(texPath);
+
+                image.addProperty("uri" , rel.toString().replaceAll("\\\\", "/"));
+
+                return imageIndex;
+            }));
 
             pbrMetallicRoughness.addProperty("metallicFactor", 0);
             pbrMetallicRoughness.addProperty("roughnessFactor", 0.40);
-
-            var texture = new JsonObject();
-            textures.add(texture);
-            texture.addProperty("sampler", 0);
-            texture.addProperty("source", images.size());
-
-            var image = new JsonObject();
-            images.add(image);
-            image.addProperty("mimeType", "image/png");
-            image.addProperty("name", "brush" + images.size());
-
-            var texPath = Paths.get(mat0.texture());
-
-            var rel = file.getParent().relativize(texPath);
-
-            image.addProperty("uri" , rel.toString().replaceAll("\\\\", "/"));
         }
 
         var meshes = new JsonArray();
