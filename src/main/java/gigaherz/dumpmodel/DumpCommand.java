@@ -17,7 +17,6 @@ import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.BlockRenderDispatcher;
-import net.minecraft.client.renderer.block.model.ItemTransforms;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.chunk.VisGraph;
 import net.minecraft.client.renderer.entity.EntityRenderer;
@@ -27,7 +26,6 @@ import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
-import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.commands.arguments.blocks.BlockStateArgument;
 import net.minecraft.commands.arguments.coordinates.BlockPosArgument;
 import net.minecraft.commands.arguments.item.ItemArgument;
@@ -45,6 +43,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.boss.EnderDragonPart;
 import net.minecraft.world.entity.boss.enderdragon.EnderDragon;
+import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.ColorResolver;
@@ -123,20 +122,20 @@ public class DumpCommand
                         .then(Commands.literal("block")
                                 .then(Commands.argument("block", BlockStateArgument.block(buildContext))
                                         .executes((ctx) -> dumpBlockModel(BlockStateArgument.getBlock(ctx, "block").getState(), null))))
-                        .then(Commands.literal("entity")
-                                .then(Commands.argument("entity", EntityArgument.entity())
-                                        .executes((ctx) -> dumpEntityRenderer(EntityArgument.getEntity(ctx, "entity")))))
+                        /*.then(Commands.literal("entity")
+                                .then(Commands.argument("entity", ClientEntityArgument.entity())
+                                        .executes((ctx) -> dumpEntityRenderer(ClientEntityArgument.getEntity(ctx, "entity")))))*/
                         .then(Commands.literal("scene")
                                 .executes(ctx -> {
                                     var p = Minecraft.getInstance().player;
                                     return dumpScene(p != null ? p.getOnPos() : BlockPos.ZERO, new Vec3i(50, 50, 50), true);
                                 })
                                 .then(Commands.argument("pos", BlockPosArgument.blockPos())
-                                        .executes(ctx -> dumpScene(BlockPosArgument.getLoadedBlockPos(ctx, "pos"), new Vec3i(32, 32, 32), true))
+                                        .executes(ctx -> dumpScene(BlockPosArgument.getBlockPos(ctx, "pos"), new Vec3i(32, 32, 32), true))
                                         .then(Commands.literal("to")
                                                 .then(Commands.argument("pos2", BlockPosArgument.blockPos())
-                                                        .executes(ctx -> dumpScene(BlockPosArgument.getLoadedBlockPos(ctx, "pos"),
-                                                                BlockPosArgument.getLoadedBlockPos(ctx, "pos"), false))
+                                                        .executes(ctx -> dumpScene(BlockPosArgument.getBlockPos(ctx, "pos"),
+                                                                BlockPosArgument.getBlockPos(ctx, "pos"), false))
                                                 )
                                         )
                                         .then(Commands.argument("sizeX", IntegerArgumentType.integer(1))
@@ -158,20 +157,20 @@ public class DumpCommand
                                                                     var x = IntegerArgumentType.getInteger(ctx, "sizeX");
                                                                     var y = IntegerArgumentType.getInteger(ctx, "sizeY");
                                                                     var z = IntegerArgumentType.getInteger(ctx, "sizeZ");
-                                                                    return dumpScene(BlockPosArgument.getLoadedBlockPos(ctx, "pos"),
+                                                                    return dumpScene(BlockPosArgument.getBlockPos(ctx, "pos"),
                                                                             new Vec3i(x, y, z), true);
                                                                 })
                                                         )
                                                         .executes(ctx -> {
                                                             var xz = IntegerArgumentType.getInteger(ctx, "sizeX");
                                                             var y = IntegerArgumentType.getInteger(ctx, "sizeY");
-                                                            return dumpScene(BlockPosArgument.getLoadedBlockPos(ctx, "pos"),
+                                                            return dumpScene(BlockPosArgument.getBlockPos(ctx, "pos"),
                                                                     new Vec3i(xz, y, xz), true);
                                                         })
                                                 )
                                                 .executes(ctx -> {
                                                     var xyz = IntegerArgumentType.getInteger(ctx, "sizeX");
-                                                    return dumpScene(BlockPosArgument.getLoadedBlockPos(ctx, "pos"),
+                                                    return dumpScene(BlockPosArgument.getBlockPos(ctx, "pos"),
                                                             new Vec3i(xyz, xyz, xyz), true);
                                                 })
                                         )
@@ -265,7 +264,7 @@ public class DumpCommand
         {
             VertexDumper dumper = new VertexDumper(WriterFactory.getActiveFactory().create());
             IClientItemExtensions.of(stack.getItem()).getCustomRenderer()
-                    .renderByItem(stack, ItemTransforms.TransformType.FIXED, new PoseStack(), dumper, 0x00F000F0, OverlayTexture.NO_OVERLAY);
+                    .renderByItem(stack, ItemDisplayContext.FIXED, new PoseStack(), dumper, 0x00F000F0, OverlayTexture.NO_OVERLAY);
 
             return dumpVertexDumper(mc, dumper, folder, file);
         }
@@ -430,7 +429,7 @@ public class DumpCommand
 
             var entities = mc.level.getEntitiesOfClass(Entity.class, aabb);
 
-            var minP = new BlockPos(aabb.minX, aabb.minY, aabb.minZ);
+            var minP = BlockPos.containing(aabb.minX, aabb.minY, aabb.minZ);
             var maxP = new BlockPos(Mth.ceil(aabb.maxX), Mth.ceil(aabb.maxY), Mth.ceil(aabb.maxZ));
 
             var builder = WriterFactory.getActiveFactory().create();

@@ -1,24 +1,28 @@
 buildscript {
     repositories {
         maven { url = 'https://maven.minecraftforge.net/' }
+        maven { url = 'https://maven.parchmentmc.org' }
         mavenCentral()
     }
     dependencies {
         classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '5.+', changing: true
+        classpath 'org.parchmentmc:librarian:1.+'
     }
 }
+
 apply plugin: 'net.minecraftforge.gradle'
-// Only edit below this line, the above code adds and enables the necessary things for Forge to be setup.
+apply plugin: 'org.parchmentmc.librarian.forgegradle'
 apply plugin: 'maven-publish'
 
 version = '1.9.9'
 group = 'dev.gigaherz.dumpmodel'
-archivesBaseName = 'DumpModel-1.19.3'
+archivesBaseName = 'DumpModel-1.19.4'
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 
 minecraft {
-    mappings channel: 'official', version: '1.19.3'
+    //mappings channel: 'official', version: '1.19.4'
+    mappings channel: 'parchment', version: '1.19.3-2023.03.12-1.19.4'
     
      accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
 
@@ -56,7 +60,7 @@ minecraft {
 }*/
 
 dependencies {
-    minecraft 'net.minecraftforge:forge:1.19.3-44.1.5'
+    minecraft 'net.minecraftforge:forge:1.19.4-45.0.64'
 
     //implementation 'com.github.javagl.JglTF:jgltf-impl-v2:master'
 }
