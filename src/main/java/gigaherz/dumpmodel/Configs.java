@@ -1,24 +1,24 @@
 package gigaherz.dumpmodel;
 
 import gigaherz.dumpmodel.builders.WriterFactory;
-import net.minecraftforge.common.ForgeConfigSpec;
+import net.neoforged.neoforge.common.ModConfigSpec;
 import org.apache.commons.lang3.tuple.Pair;
 
 public class Configs
 {
     public static final ClientConfig CLIENT;
-    public static final ForgeConfigSpec CLIENT_SPEC;
+    public static final ModConfigSpec CLIENT_SPEC;
     static {
-        final Pair<ClientConfig, ForgeConfigSpec> specPair = new ForgeConfigSpec.Builder().configure(ClientConfig::new);
+        final Pair<ClientConfig, ModConfigSpec> specPair = new ModConfigSpec.Builder().configure(ClientConfig::new);
         CLIENT_SPEC = specPair.getRight();
         CLIENT = specPair.getLeft();
     }
 
     private static class ClientConfig
     {
-        ForgeConfigSpec.ConfigValue<String> saveFormat;
+        ModConfigSpec.ConfigValue<String> saveFormat;
 
-        ClientConfig(ForgeConfigSpec.Builder builder)
+        ClientConfig(ModConfigSpec.Builder builder)
         {
             builder.push("general");
             saveFormat = builder

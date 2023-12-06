@@ -32,6 +32,7 @@ import net.minecraft.commands.arguments.item.ItemArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
@@ -56,11 +57,10 @@ import net.minecraft.world.level.lighting.LevelLightEngine;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.phys.*;
-import net.minecraftforge.client.extensions.common.IClientItemExtensions;
-import net.minecraftforge.client.model.data.ModelData;
-import net.minecraftforge.entity.PartEntity;
-import net.minecraftforge.fml.loading.FMLPaths;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.neoforged.fml.loading.FMLPaths;
+import net.neoforged.neoforge.client.extensions.common.IClientItemExtensions;
+import net.neoforged.neoforge.client.model.data.ModelData;
+import net.neoforged.neoforge.entity.PartEntity;
 import org.slf4j.Logger;
 
 import javax.annotation.Nullable;
@@ -243,7 +243,7 @@ public class DumpCommand
     {
         Minecraft mc = Minecraft.getInstance();
         BakedModel model = mc.getItemRenderer().getModel(stack, mc.level, mc.player, 0);
-        ResourceLocation regName = ForgeRegistries.ITEMS.getKey(stack.getItem());
+        ResourceLocation regName = BuiltInRegistries.ITEM.getKey(stack.getItem());
         if (regName == null)
             throw new RuntimeException("Item registry name is null");
         Path folder = FMLPaths.GAMEDIR.get()
@@ -285,7 +285,7 @@ public class DumpCommand
             if (data == null) data = ModelData.EMPTY;
         }
 
-        ResourceLocation regName = ForgeRegistries.BLOCKS.getKey(state.getBlock());
+        ResourceLocation regName = BuiltInRegistries.BLOCK.getKey(state.getBlock());
         if (regName == null)
             throw new RuntimeException("Block registry name is null");
         Path folder = FMLPaths.GAMEDIR.get()
@@ -377,7 +377,7 @@ public class DumpCommand
                 renderer.render(entity, 0, mc.getFrameTime(), new PoseStack(), dumper, 0x00F000F0);
             }
 
-            ResourceLocation regName = ForgeRegistries.ENTITY_TYPES.getKey(entity.getType());
+            ResourceLocation regName = BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType());
             if (regName == null)
                 throw new RuntimeException("EntityType registry name is null");
             Path folder = FMLPaths.GAMEDIR.get()

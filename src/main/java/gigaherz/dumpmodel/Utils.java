@@ -15,7 +15,7 @@ import net.minecraft.nbt.FloatTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.RandomSource;
-import net.minecraftforge.client.model.data.ModelData;
+import net.neoforged.neoforge.client.model.data.ModelData;
 import org.apache.commons.io.FilenameUtils;
 import org.lwjgl.opengl.GL11;
 import org.slf4j.Logger;

@@ -1,72 +1,48 @@
-buildscript {
-    repositories {
-        maven { url = 'https://maven.minecraftforge.net/' }
-        maven { url = 'https://maven.parchmentmc.org' }
-        mavenCentral()
-    }
-    dependencies {
-        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '5.+', changing: true
-        classpath 'org.parchmentmc:librarian:1.+'
-    }
+plugins {
+    id 'java-library'
+    id 'eclipse'
+    id 'idea'
+    id 'maven-publish'
+    id 'net.neoforged.gradle.userdev' version '7.0.57'
+    id 'net.neoforged.gradle.mixin' version '7.0.57'
 }
-
-apply plugin: 'net.minecraftforge.gradle'
-apply plugin: 'org.parchmentmc.librarian.forgegradle'
-apply plugin: 'maven-publish'
 
 version = '1.9.9'
 group = 'dev.gigaherz.dumpmodel'
-archivesBaseName = "DumpModel-UNKNOWN"
 
-project.afterEvaluate {
-    archivesBaseName = "DumpModel-${project.MC_VERSION}"
+
+base {
+    archivesName = "DumpModel-1.20.3"
 }
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 
-minecraft {
-    //mappings channel: 'official', version: '1.19.4'
-    mappings channel: 'parchment', version: '2023.08.20-1.20.1'
-    
-     accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8' // Use the UTF-8 charset for Java compilation
+}
 
-    runs {
-        client {
-            workingDirectory project.file('run')
+minecraft.accessTransformers.file rootProject.file('src/main/resources/META-INF/accesstransformer.cfg')
 
-            property 'forge.logging.markers', ''
-            property 'forge.logging.console.level', 'debug'
+runs {
+    // applies to all the run configs below
+    configureEach {
+        systemProperty 'forge.logging.markers', '' // 'REGISTRIES'
+        systemProperty 'forge.logging.console.level', 'debug'
 
-            mods {
-                thismod {
-                    source sourceSets.main
-                }
-            }
-        }
+        workingDirectory project.file('run')
 
-        server {
-            workingDirectory project.file('run')
+        modSource project.sourceSets.main
+    }
 
-            property 'forge.logging.markers', ''
-            property 'forge.logging.console.level', 'debug'
+    client {
+    }
 
-            mods {
-                thismod {
-                    source sourceSets.main
-                }
-            }
-        }
+    server {
     }
 }
 
-/*repositories {
-    maven { url 'https://jitpack.io' }
-}*/
-
 dependencies {
-    minecraft 'net.minecraftforge:forge:1.20.1-47.1.3'
-
-    //implementation 'com.github.javagl.JglTF:jgltf-impl-v2:master'
+    implementation 'net.neoforged:neoforge:20.3.3-beta'
 }
 
 jar {
@@ -88,23 +64,11 @@ tasks.withType(GenerateModuleMetadata) {
 }
 
 project.afterEvaluate {
-    publish.dependsOn('build')
     publishing {
         publications {
             mavenJava(MavenPublication) {
                 artifactId project.archivesBaseName
                 from components.java
-
-                //artifact sourceJar
-
-                pom.withXml {
-                    asNode().dependencies.dependency.each { dep ->
-                        if (dep.groupId.last().value().last() in
-                                    ["net.minecraftforge"]) {
-                            assert dep.parent().remove(dep)
-                        }
-                    }
-                }
             }
         }
 

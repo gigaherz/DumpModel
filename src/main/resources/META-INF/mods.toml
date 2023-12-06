@@ -1,5 +1,5 @@
 modLoader="javafml" #mandatory
-loaderVersion="[41,)" #mandatory
+loaderVersion="[1,)" #mandatory
 authors="gigaherz" #optional
 license="BSD (3 clause)"
 
@@ -10,15 +10,15 @@ license="BSD (3 clause)"
     displayName="Example Mod"
 
 [[dependencies.dumpmodel]]
-    modId="forge"
+    modId="neoforge"
     mandatory=true
-    versionRange="[41,)"
+    versionRange="[20.2,)"
     ordering="NONE"
     side="BOTH"
 
 [[dependencies.dumpmodel]]
     modId="minecraft"
     mandatory=true
-    versionRange="[1.19,)"
+    versionRange="[1.20.2,)"
     ordering="NONE"
     side="BOTH"
