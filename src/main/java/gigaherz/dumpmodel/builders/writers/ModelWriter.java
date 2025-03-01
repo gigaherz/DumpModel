@@ -1,8 +1,6 @@
 package gigaherz.dumpmodel.builders.writers;
 
 import com.mojang.blaze3d.vertex.VertexFormatElement;
-import com.mojang.datafixers.util.Pair;
-import gigaherz.dumpmodel.builders.AlphaMode;
 import gigaherz.dumpmodel.builders.BasicMaterial;
 import gigaherz.dumpmodel.builders.ModelGroup;
 import gigaherz.dumpmodel.builders.NamedMaterial;
@@ -53,5 +51,4 @@ public abstract class ModelWriter<T extends ModelWriter<T>>
     {
         return groups;
     }
-
 }

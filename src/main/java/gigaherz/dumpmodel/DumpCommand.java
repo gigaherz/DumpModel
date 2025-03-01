@@ -6,7 +6,6 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import com.mojang.brigadier.tree.LiteralCommandNode;
 import com.mojang.logging.LogUtils;
 import gigaherz.dumpmodel.builders.WriterFactory;
 import gigaherz.dumpmodel.builders.writers.ModelWriter;
@@ -303,7 +302,7 @@ public class DumpCommand
             case MODEL:
                 if (!isCustomRenderer)
                 {
-                    for(var rt : RenderType.chunkBufferLayers())
+                    for (var rt : RenderType.chunkBufferLayers())
                     {
                         mc.getBlockRenderer().renderSingleBlock(state, new PoseStack(), dumper, 0x00F000F0, OverlayTexture.NO_OVERLAY, data, rt);
                     }
@@ -469,12 +468,13 @@ public class DumpCommand
 
                 BlockState blockstate1 = level.getBlockState(blockpos2);
                 FluidState fluidstate = blockstate1.getFluidState();
-                ModelData modelData = Objects.requireNonNull(Objects.requireNonNull(mc.level).getModelDataManager()).getAt(blockpos2);;
+                ModelData modelData = Objects.requireNonNull(Objects.requireNonNull(mc.level).getModelDataManager()).getAt(blockpos2);
+                ;
                 if (modelData == null) modelData = ModelData.EMPTY;
                 if (!fluidstate.isEmpty())
                 {
                     posestack.pushPose();
-                    posestack.translate(blockpos2.getX() - (blockpos2.getX()&15), blockpos2.getY() - (blockpos2.getY()&15), blockpos2.getZ() - (blockpos2.getZ()&15));
+                    posestack.translate(blockpos2.getX() - (blockpos2.getX() & 15), blockpos2.getY() - (blockpos2.getY() & 15), blockpos2.getZ() - (blockpos2.getZ() & 15));
                     var consumer = new TransformingConsumer(dumper0.getBuffer(ItemBlockRenderTypes.getRenderLayer(fluidstate)), posestack.last());
                     blockrenderdispatcher.renderLiquid(blockpos2, level, consumer, blockstate1, fluidstate);
                     posestack.popPose();

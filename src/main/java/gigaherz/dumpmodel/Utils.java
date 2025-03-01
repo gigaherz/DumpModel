@@ -4,7 +4,9 @@ import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.VertexFormatElement;
 import com.mojang.logging.LogUtils;
-import gigaherz.dumpmodel.builders.*;
+import gigaherz.dumpmodel.builders.AlphaMode;
+import gigaherz.dumpmodel.builders.BasicMaterial;
+import gigaherz.dumpmodel.builders.WriterFactory;
 import gigaherz.dumpmodel.builders.writers.ModelWriter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.block.model.BakedQuad;
@@ -65,7 +67,7 @@ public class Utils
     {
         var textureFolder = new File(FilenameUtils.removeExtension(parentName.toFile().getAbsolutePath()) + "_textures");
         textureFolder.mkdirs();
-        var textureFile = new File(textureFolder, texture.toString().replace(":","_").replace("/","_") + ".png");
+        var textureFile = new File(textureFolder, texture.toString().replace(":", "_").replace("/", "_") + ".png");
 
         dumpTexture(texture, textureFile.toPath());
 
@@ -84,7 +86,8 @@ public class Utils
         }
     }
 
-    public static NativeImage downloadTexture(ResourceLocation texture) {
+    public static NativeImage downloadTexture(ResourceLocation texture)
+    {
         var id = Minecraft.getInstance().getTextureManager().getTexture(texture).getId();
         RenderSystem.bindTexture(id);
         int width = GL11.glGetTexLevelParameteri(GL11.GL_TEXTURE_2D, 0, GL11.GL_TEXTURE_WIDTH);

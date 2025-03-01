@@ -1,10 +1,10 @@
 package gigaherz.dumpmodel.builders.writers;
 
-import com.google.gson.*;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import com.google.gson.stream.JsonWriter;
-import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormatElement;
-import gigaherz.dumpmodel.builders.AlphaMode;
 import gigaherz.dumpmodel.builders.ModelGroup;
 import gigaherz.dumpmodel.builders.ModelMesh;
 import io.netty.buffer.ByteBufUtil;
@@ -32,7 +32,7 @@ public class GltfModelWriter extends ModelWriter<GltfModelWriter>
         var obj = new JsonObject();
 
         var asset = new JsonObject();
-        obj.add("asset" , asset);
+        obj.add("asset", asset);
 
         asset.addProperty("generator", "DumpModel v1.0"); // TODO: mod version
         asset.addProperty("version", "2.0");
@@ -64,7 +64,7 @@ public class GltfModelWriter extends ModelWriter<GltfModelWriter>
 
         var imageMap = new HashMap<String, Integer>();
         var materialMap = new HashMap<String, Integer>();
-        for(var entry : materialLibrary().entrySet())
+        for (var entry : materialLibrary().entrySet())
         {
             var mat0 = entry.getValue();
 
@@ -72,9 +72,10 @@ public class GltfModelWriter extends ModelWriter<GltfModelWriter>
 
             var material = new JsonObject();
             materials.add(material);
-            switch(mat0.mat().alphaMode())
+            switch (mat0.mat().alphaMode())
             {
-                case OPAQUE: break;
+                case OPAQUE:
+                    break;
                 case CUTOUT:
                     material.addProperty("alphaMode", "MASK");
                     material.addProperty("alphaCutoff", 0.5);
@@ -109,7 +110,7 @@ public class GltfModelWriter extends ModelWriter<GltfModelWriter>
 
                 var rel = file.getParent().relativize(texPath);
 
-                image.addProperty("uri" , rel.toString().replaceAll("\\\\", "/"));
+                image.addProperty("uri", rel.toString().replaceAll("\\\\", "/"));
 
                 return imageIndex;
             }));
@@ -141,9 +142,9 @@ public class GltfModelWriter extends ModelWriter<GltfModelWriter>
         sampler.addProperty("magFilter", GL11.GL_NEAREST);
         sampler.addProperty("minFilter", GL11.GL_NEAREST);
 
-        for(var group : groups())
+        for (var group : groups())
         {
-            for(var mesh : group.meshes())
+            for (var mesh : group.meshes())
             {
                 saveMesh(group, mesh, nodes, nodeIndices, meshes, accessors, bufferViews, materialMap, bufferData);
             }
@@ -199,29 +200,29 @@ public class GltfModelWriter extends ModelWriter<GltfModelWriter>
         var texcoords = new ArrayList<Double>();
         var normals = new ArrayList<Double>();
 
-        for(var face : mesh0.faces())
+        for (var face : mesh0.faces())
         {
             var vertexList = face.vertices();
 
-            if(vertexList.size() == 3)
+            if (vertexList.size() == 3)
             {
                 var offset = positions.size() / 3;
-                indices.add(offset+0);
-                indices.add(offset+1);
-                indices.add(offset+2);
+                indices.add(offset + 0);
+                indices.add(offset + 1);
+                indices.add(offset + 2);
             }
             else if (vertexList.size() >= 4)
             {
                 var offset = positions.size() / 3;
-                indices.add(offset+0);
-                indices.add(offset+1);
-                indices.add(offset+2);
-                indices.add(offset+0);
-                indices.add(offset+2);
-                indices.add(offset+3);
+                indices.add(offset + 0);
+                indices.add(offset + 1);
+                indices.add(offset + 2);
+                indices.add(offset + 0);
+                indices.add(offset + 2);
+                indices.add(offset + 3);
             }
 
-            for(var vtx : vertexList)
+            for (var vtx : vertexList)
             {
                 boolean hasP = vtx.indices().containsKey(VertexFormatElement.POSITION);
                 boolean hasT = vtx.indices().containsKey(VertexFormatElement.UV0);
@@ -233,15 +234,23 @@ public class GltfModelWriter extends ModelWriter<GltfModelWriter>
                 var n = hasN ? elementDatas().get(VertexFormatElement.NORMAL).get(vtx.indices().get(VertexFormatElement.NORMAL)) : new double[]{0, 0, 0};
                 var c = hasC ? elementDatas().get(VertexFormatElement.COLOR).get(vtx.indices().get(VertexFormatElement.COLOR)) : new double[]{0, 0, 0, 0};
 
-                if(positions.size() == 0)
+                if (positions.size() == 0)
                 {
-                    minPos[0] = p[0];minPos[1] = p[1];minPos[2] = p[2];
-                    maxPos[0] = p[0];maxPos[1] = p[1];maxPos[2] = p[2];
+                    minPos[0] = p[0];
+                    minPos[1] = p[1];
+                    minPos[2] = p[2];
+                    maxPos[0] = p[0];
+                    maxPos[1] = p[1];
+                    maxPos[2] = p[2];
                 }
                 else
                 {
-                    minPos[0] = Math.min(minPos[0], p[0]); minPos[1] = Math.min(minPos[1], p[1]); minPos[2] = Math.min(minPos[2], p[2]);
-                    maxPos[0] = Math.max(maxPos[0], p[0]); maxPos[1] = Math.max(maxPos[1], p[1]); maxPos[2] = Math.max(maxPos[2], p[2]);
+                    minPos[0] = Math.min(minPos[0], p[0]);
+                    minPos[1] = Math.min(minPos[1], p[1]);
+                    minPos[2] = Math.min(minPos[2], p[2]);
+                    maxPos[0] = Math.max(maxPos[0], p[0]);
+                    maxPos[1] = Math.max(maxPos[1], p[1]);
+                    maxPos[2] = Math.max(maxPos[2], p[2]);
                 }
 
                 Arrays.stream(p).forEach(positions::add);
@@ -254,7 +263,7 @@ public class GltfModelWriter extends ModelWriter<GltfModelWriter>
         byte[] positionData;
         {
             var buffer = Unpooled.buffer();
-            positions.forEach(d -> buffer.writeFloatLE((float) (double)d));
+            positions.forEach(d -> buffer.writeFloatLE((float) (double) d));
             positionData = ByteBufUtil.getBytes(buffer);
             buffer.release();
         }
@@ -374,7 +383,7 @@ public class GltfModelWriter extends ModelWriter<GltfModelWriter>
         return index;
     }
 
-    private int addColorAccessor(JsonArray accessors,  JsonArray bufferViews, ByteArrayOutputStream bufferData, byte[] data, int vertexCount) throws IOException
+    private int addColorAccessor(JsonArray accessors, JsonArray bufferViews, ByteArrayOutputStream bufferData, byte[] data, int vertexCount) throws IOException
     {
         int bufferIndex = addBufferView(bufferViews, bufferData, data, 34962 /* array buffer */);
 
@@ -440,5 +449,4 @@ public class GltfModelWriter extends ModelWriter<GltfModelWriter>
             throw new RuntimeException(e);
         }
     }
-
 }

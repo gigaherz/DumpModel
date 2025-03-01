@@ -25,7 +25,7 @@ public class VertexAccumulator implements VertexConsumer
     {
         current = new VertexData();
         vertices.add(current);
-        current.pos(x-origin.getX(), y-origin.getY(), z-origin.getZ());
+        current.pos(x - origin.getX(), y - origin.getY(), z - origin.getZ());
         return this;
     }
 

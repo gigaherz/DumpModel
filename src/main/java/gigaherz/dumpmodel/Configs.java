@@ -8,7 +8,9 @@ public class Configs
 {
     public static final ClientConfig CLIENT;
     public static final ModConfigSpec CLIENT_SPEC;
-    static {
+
+    static
+    {
         final Pair<ClientConfig, ModConfigSpec> specPair = new ModConfigSpec.Builder().configure(ClientConfig::new);
         CLIENT_SPEC = specPair.getRight();
         CLIENT = specPair.getLeft();

@@ -1,11 +1,13 @@
 package gigaherz.dumpmodel.builders.writers;
 
-import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormatElement;
 import gigaherz.dumpmodel.builders.ModelFaceVertex;
 import org.apache.commons.io.FilenameUtils;
 
-import java.io.*;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Locale;
@@ -52,7 +54,7 @@ public class ObjModelWriter extends ModelWriter<ObjModelWriter>
 
             Map<VertexFormatElement, Integer> counts = new HashMap<>();
 
-            for(var group : groups())
+            for (var group : groups())
             {
                 writer.write(String.format("g %s\n", group.name()));
 
@@ -68,14 +70,14 @@ public class ObjModelWriter extends ModelWriter<ObjModelWriter>
                     int cc = counts.getOrDefault(VertexFormatElement.COLOR, 0);
                     int rc = mesh.requireElements().getOrDefault(VertexFormatElement.COLOR, 0);
 
-                    boolean doColors = (rc-cc) == (rp-cp);
-                    for(int ip=cp, ic=cc; ip<rp;ip++, ic++)
+                    boolean doColors = (rc - cc) == (rp - cp);
+                    for (int ip = cp, ic = cc; ip < rp; ip++, ic++)
                     {
                         var vp = elementDatas().get(VertexFormatElement.POSITION).get(ip);
                         if (doColors)
                         {
                             var vc = elementDatas().get(VertexFormatElement.COLOR).get(ic);
-                            writer.write(String.format("v %f %f %f %f %f %f\n", vp[0], vp[1], vp[2], vc[0]/255.0f, vc[1]/255.0f, vc[2]/255.0f));
+                            writer.write(String.format("v %f %f %f %f %f %f\n", vp[0], vp[1], vp[2], vc[0] / 255.0f, vc[1] / 255.0f, vc[2] / 255.0f));
                         }
                         else
                         {
@@ -83,16 +85,16 @@ public class ObjModelWriter extends ModelWriter<ObjModelWriter>
                         }
                     }
                     counts.put(VertexFormatElement.POSITION, rp);
-                    if(rc != cc) counts.put(VertexFormatElement.COLOR, rc);
+                    if (rc != cc) counts.put(VertexFormatElement.COLOR, rc);
 
                     // tex coord
                     int ct = counts.getOrDefault(VertexFormatElement.UV0, 0);
                     int rt = mesh.requireElements().getOrDefault(VertexFormatElement.UV0, 0);
 
-                    for(int i=ct; i<rt;i++)
+                    for (int i = ct; i < rt; i++)
                     {
                         var vt = elementDatas().get(VertexFormatElement.UV0).get(i);
-                        writer.write(String.format("vt %f %f\n", vt[0], 1-vt[1]));
+                        writer.write(String.format("vt %f %f\n", vt[0], 1 - vt[1]));
                     }
                     counts.put(VertexFormatElement.UV0, rp);
 
@@ -100,7 +102,7 @@ public class ObjModelWriter extends ModelWriter<ObjModelWriter>
                     int cn = counts.getOrDefault(VertexFormatElement.NORMAL, 0);
                     int rn = mesh.requireElements().getOrDefault(VertexFormatElement.NORMAL, 0);
 
-                    for(int i=cn; i<rn;i++)
+                    for (int i = cn; i < rn; i++)
                     {
                         var vn = elementDatas().get(VertexFormatElement.NORMAL).get(i);
                         writer.write(String.format("vn %f %f %f\n", vn[0], vn[1], vn[2]));
@@ -108,14 +110,13 @@ public class ObjModelWriter extends ModelWriter<ObjModelWriter>
                     counts.put(VertexFormatElement.NORMAL, rp);
 
                     // faces
-                    for(var face : mesh.faces())
+                    for (var face : mesh.faces())
                     {
                         var f = face.vertices().stream().map(this::formatIndices).collect(Collectors.joining(" "));
                         writer.write(String.format("f %s\n", f));
                     }
                 }
             }
-
         }
         catch (IOException e)
         {
@@ -128,7 +129,7 @@ public class ObjModelWriter extends ModelWriter<ObjModelWriter>
             try (OutputStream output = new FileOutputStream(matLib);
                  OutputStreamWriter writer = new OutputStreamWriter(output))
             {
-                for(var mat : materialLibrary().values())
+                for (var mat : materialLibrary().values())
                 {
                     writer.write(String.format("newmtl %s\n", mat.name()));
                     if (mat.mat().texture() != null)
@@ -155,8 +156,6 @@ public class ObjModelWriter extends ModelWriter<ObjModelWriter>
                 e.printStackTrace();
                 throw new RuntimeException(e);
             }
-
         }
     }
-
 }

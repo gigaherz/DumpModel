@@ -13,7 +13,10 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -24,7 +27,7 @@ public class VertexDumper implements MultiBufferSource
     public final ModelWriter<?> builder;
 
     private final Predicate<RenderType> doBuffer;
-    private BlockPos origin = new BlockPos(0,0,0);
+    private BlockPos origin = new BlockPos(0, 0, 0);
     private RenderType lastRt;
     private VertexAccumulator lastBuffer;
 
@@ -68,7 +71,7 @@ public class VertexDumper implements MultiBufferSource
 
         if (doBuffer.test(rt))
         {
-            for(var pair : parts)
+            for (var pair : parts)
             {
                 if (pair.getFirst() == rt)
                 {
@@ -178,8 +181,10 @@ public class VertexDumper implements MultiBufferSource
                     {
                         case POSITION -> vertexBuilder.element(element, data.pos.x, data.pos.y, data.pos.z);
                         case UV -> vertexBuilder.element(element, data.uv[index].x, data.uv[index].y);
-                        case NORMAL -> vertexBuilder.element(element, data.normal.x(), data.normal.y(), data.normal.z());
-                        case COLOR -> vertexBuilder.element(element, data.color[0],data.color[1],data.color[2],data.color[3]);
+                        case NORMAL ->
+                                vertexBuilder.element(element, data.normal.x(), data.normal.y(), data.normal.z());
+                        case COLOR ->
+                                vertexBuilder.element(element, data.color[0], data.color[1], data.color[2], data.color[3]);
                         default -> vertexBuilder;
                     };
                 }

@@ -1,6 +1,5 @@
 package gigaherz.dumpmodel.builders.writers;
 
-import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormatElement;
 
 import java.io.*;
@@ -162,10 +161,10 @@ public class UsdModelWriter extends ModelWriter<UsdModelWriter>
         writer.write("def \"_materials\"\n");
         writer.write("{\n");
 
-        for(var mat : materialLibrary().values())
+        for (var mat : materialLibrary().values())
         {
             String matName = mat.name().replaceAll("[^a-zA-Z0-9_]", "_");
-            writer.write("    def Material \""+ matName +"\"\n");
+            writer.write("    def Material \"" + matName + "\"\n");
             writer.write("    {\n");
             writer.write("        def Scope \"preview\"\n");
             writer.write("        {\n");
@@ -182,22 +181,22 @@ public class UsdModelWriter extends ModelWriter<UsdModelWriter>
 
             var tx = file.getParent().relativize(Paths.get(mat.mat().texture()));
 
-            writer.write("                asset inputs:file = @."+File.separator+tx.toString()+"@\n");
+            writer.write("                asset inputs:file = @." + File.separator + tx.toString() + "@\n");
             writer.write("                token inputs:sourceColorSpace = \"sRGB\"\n");
-            writer.write("                float2 inputs:st.connect = </_materials/"+ matName +"/preview/uvmap.outputs:result>\n");
+            writer.write("                float2 inputs:st.connect = </_materials/" + matName + "/preview/uvmap.outputs:result>\n");
             writer.write("                float3 outputs:rgb\n");
             writer.write("            }\n");
             writer.write("\n");
             writer.write("            def Shader \"Diffuse_BSDF\"\n");
             writer.write("            {\n");
             writer.write("                uniform token info:id = \"UsdPreviewSurface\"\n");
-            writer.write("                float3 inputs:diffuseColor.connect = </_materials/"+ matName +"/preview/Image_Texture.outputs:rgb>\n");
+            writer.write("                float3 inputs:diffuseColor.connect = </_materials/" + matName + "/preview/Image_Texture.outputs:rgb>\n");
             writer.write("                float inputs:roughness = 0.5\n");
             writer.write("                token outputs:surface\n");
             writer.write("            }\n");
             writer.write("        }\n");
             writer.write("\n");
-            writer.write("        token outputs:surface.connect = </_materials/"+ matName +"/preview/Diffuse_BSDF.outputs:surface>\n");
+            writer.write("        token outputs:surface.connect = </_materials/" + matName + "/preview/Diffuse_BSDF.outputs:surface>\n");
             writer.write("    }\n");
         }
 

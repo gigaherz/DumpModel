@@ -19,7 +19,6 @@ public class DumpModel
 
         modEventBus.addListener(this::loadConfigs);
         modEventBus.addListener(this::reloadConfigs);
-
     }
 
     public void loadConfigs(ModConfigEvent.Loading event)
