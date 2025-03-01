@@ -3,6 +3,7 @@ package gigaherz.dumpmodel.builders.writers;
 import com.google.gson.*;
 import com.google.gson.stream.JsonWriter;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+import com.mojang.blaze3d.vertex.VertexFormatElement;
 import gigaherz.dumpmodel.builders.AlphaMode;
 import gigaherz.dumpmodel.builders.ModelGroup;
 import gigaherz.dumpmodel.builders.ModelMesh;
@@ -113,8 +114,8 @@ public class GltfModelWriter extends ModelWriter<GltfModelWriter>
                 return imageIndex;
             }));
 
-            pbrMetallicRoughness.addProperty("metallicFactor", 0);
-            pbrMetallicRoughness.addProperty("roughnessFactor", 0.40);
+            pbrMetallicRoughness.addProperty("metallicFactor", 0.67);
+            pbrMetallicRoughness.addProperty("roughnessFactor", 0.98);
         }
 
         var meshes = new JsonArray();
@@ -222,15 +223,15 @@ public class GltfModelWriter extends ModelWriter<GltfModelWriter>
 
             for(var vtx : vertexList)
             {
-                boolean hasP = vtx.indices().containsKey(DefaultVertexFormat.ELEMENT_POSITION);
-                boolean hasT = vtx.indices().containsKey(DefaultVertexFormat.ELEMENT_UV0);
-                boolean hasN = vtx.indices().containsKey(DefaultVertexFormat.ELEMENT_NORMAL);
-                boolean hasC = vtx.indices().containsKey(DefaultVertexFormat.ELEMENT_COLOR);
+                boolean hasP = vtx.indices().containsKey(VertexFormatElement.POSITION);
+                boolean hasT = vtx.indices().containsKey(VertexFormatElement.UV0);
+                boolean hasN = vtx.indices().containsKey(VertexFormatElement.NORMAL);
+                boolean hasC = vtx.indices().containsKey(VertexFormatElement.COLOR);
 
-                var p = hasP ? elementDatas().get(DefaultVertexFormat.ELEMENT_POSITION).get(vtx.indices().get(DefaultVertexFormat.ELEMENT_POSITION)) : new double[]{0, 0, 0};
-                var t = hasT ? elementDatas().get(DefaultVertexFormat.ELEMENT_UV0).get(vtx.indices().get(DefaultVertexFormat.ELEMENT_UV0)) : new double[]{0, 0};
-                var n = hasN ? elementDatas().get(DefaultVertexFormat.ELEMENT_NORMAL).get(vtx.indices().get(DefaultVertexFormat.ELEMENT_NORMAL)) : new double[]{0, 0, 0};
-                var c = hasC ? elementDatas().get(DefaultVertexFormat.ELEMENT_COLOR).get(vtx.indices().get(DefaultVertexFormat.ELEMENT_COLOR)) : new double[]{0, 0, 0, 0};
+                var p = hasP ? elementDatas().get(VertexFormatElement.POSITION).get(vtx.indices().get(VertexFormatElement.POSITION)) : new double[]{0, 0, 0};
+                var t = hasT ? elementDatas().get(VertexFormatElement.UV0).get(vtx.indices().get(VertexFormatElement.UV0)) : new double[]{0, 0};
+                var n = hasN ? elementDatas().get(VertexFormatElement.NORMAL).get(vtx.indices().get(VertexFormatElement.NORMAL)) : new double[]{0, 0, 0};
+                var c = hasC ? elementDatas().get(VertexFormatElement.COLOR).get(vtx.indices().get(VertexFormatElement.COLOR)) : new double[]{0, 0, 0, 0};
 
                 if(positions.size() == 0)
                 {

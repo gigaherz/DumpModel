@@ -77,7 +77,7 @@ public class DumpCommand
 
     public static void init(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext buildContext)
     {
-        LiteralCommandNode<CommandSourceStack> register = dispatcher.register(
+        dispatcher.register(
                 LiteralArgumentBuilder.<CommandSourceStack>literal("dumpmodel")
                         .then(Commands.literal("atlas")
                                 .executes((ctx) -> dumpBlockAtlas())
@@ -250,10 +250,11 @@ public class DumpCommand
                 .resolve("models/items")
                 .resolve(regName.getNamespace());
         Path file;
-        if (stack.hasTag())
+        var components = stack.getComponents();
+        if (components != null)
         {
             folder = folder.resolve(regName.getPath());
-            file = folder.resolve(Objects.requireNonNull(stack.getTag()).hashCode() + WriterFactory.getActiveFactory().extension());
+            file = folder.resolve(components.hashCode() + WriterFactory.getActiveFactory().extension());
         }
         else
         {
@@ -325,7 +326,7 @@ public class DumpCommand
                         }
                         else
                         {
-                            ter.render(te, mc.getFrameTime(), new PoseStack(), dumper, 0x00F000F0, OverlayTexture.NO_OVERLAY);
+                            ter.render(te, mc.getTimer().getGameTimeDeltaPartialTick(false), new PoseStack(), dumper, 0x00F000F0, OverlayTexture.NO_OVERLAY);
                         }
                     }
                     else if (isCustomRenderer)
@@ -366,7 +367,7 @@ public class DumpCommand
 
                 EntityRenderer<? super EnderDragon> renderer = mc.getEntityRenderDispatcher().getRenderer(dragon);
 
-                renderer.render(dragon, 0, mc.getFrameTime(), new PoseStack(), dumper, 0x00F000F0);
+                renderer.render(dragon, 0, mc.getTimer().getGameTimeDeltaPartialTick(false), new PoseStack(), dumper, 0x00F000F0);
             }
             else
             {
@@ -374,7 +375,7 @@ public class DumpCommand
                 EntityRenderer renderer = mc.getEntityRenderDispatcher().getRenderer(entity);
 
                 //noinspection unchecked
-                renderer.render(entity, 0, mc.getFrameTime(), new PoseStack(), dumper, 0x00F000F0);
+                renderer.render(entity, 0, mc.getTimer().getGameTimeDeltaPartialTick(false), new PoseStack(), dumper, 0x00F000F0);
             }
 
             ResourceLocation regName = BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType());
@@ -474,7 +475,7 @@ public class DumpCommand
                 {
                     posestack.pushPose();
                     posestack.translate(blockpos2.getX() - (blockpos2.getX()&15), blockpos2.getY() - (blockpos2.getY()&15), blockpos2.getZ() - (blockpos2.getZ()&15));
-                    var consumer = new TransformingConsumer(dumper0.getBuffer(ItemBlockRenderTypes.getRenderLayer(fluidstate)), posestack.last().pose(), posestack.last().normal());
+                    var consumer = new TransformingConsumer(dumper0.getBuffer(ItemBlockRenderTypes.getRenderLayer(fluidstate)), posestack.last());
                     blockrenderdispatcher.renderLiquid(blockpos2, level, consumer, blockstate1, fluidstate);
                     posestack.popPose();
                 }
@@ -507,7 +508,7 @@ public class DumpCommand
                 {
                     var renderer = mc.getEntityRenderDispatcher().getRenderer(entity);
 
-                    renderer.render(entity, 0, mc.getFrameTime(), posestack, dumper, 0x00F000F0);
+                    renderer.render(entity, 0, mc.getTimer().getGameTimeDeltaPartialTick(false), posestack, dumper, 0x00F000F0);
                 }
 
                 dumper.finish(textureDumper, String.format("entity_%s", entity.getId()));

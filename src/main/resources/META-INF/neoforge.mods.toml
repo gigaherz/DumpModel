@@ -11,14 +11,14 @@ license="BSD (3 clause)"
 
 [[dependencies.dumpmodel]]
     modId="neoforge"
-    mandatory=true
-    versionRange="[20.2,)"
+    type="required"
+    versionRange="[21.0,)"
     ordering="NONE"
     side="BOTH"
 
 [[dependencies.dumpmodel]]
     modId="minecraft"
-    mandatory=true
-    versionRange="[1.20.2,)"
+    type="required"
+    versionRange="[1.21.0,)"
     ordering="NONE"
     side="BOTH"

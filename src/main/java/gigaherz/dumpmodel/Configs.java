@@ -37,13 +37,9 @@ public class Configs
     public static void refreshClient()
     {
         var format = CLIENT.saveFormat.get();
-        if (WriterFactory.isValidFactoryName(format))
+        if (!WriterFactory.getActiveFactoryName().equals(format) && WriterFactory.isValidFactoryName(format))
         {
             WriterFactory.setActiveFactory(format);
-        }
-        else
-        {
-            activeFactoryUpdated(WriterFactory.getActiveFactoryName());
         }
     }
 }

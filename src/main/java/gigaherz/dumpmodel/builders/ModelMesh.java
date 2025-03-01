@@ -65,21 +65,18 @@ public class ModelMesh<T extends ModelWriter<T>>
     {
         VertexFormat fmt = DefaultVertexFormat.BLOCK;
         int[] vdata = quad.getVertices();
-        int byteStart = 0;
+        int byteStart0 = 0;
         ModelFace<T> face = face();
         for (int i = 0; i < 4; i++)
         {
             ModelFaceVertex<T> vertex = face.vertex();
             for (VertexFormatElement element : fmt.getElements())
             {
-                if (element.getUsage() != VertexFormatElement.Usage.PADDING)
-                {
-                    double[] values = Utils.extractData(vdata, byteStart, element);
-                    vertex.element(element, values);
-                }
-                byteStart += element.getType().getSize() * element.getElementCount();
+                double[] values = Utils.extractData(vdata, byteStart0 + fmt.getOffset(element), element);
+                vertex.element(element, values);
             }
             vertex.end();
+            byteStart0 += fmt.getVertexSize();
         }
         return face.end();
     }

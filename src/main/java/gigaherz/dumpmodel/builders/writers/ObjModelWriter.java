@@ -25,13 +25,13 @@ public class ObjModelWriter extends ModelWriter<ObjModelWriter>
 
     private String formatIndices(ModelFaceVertex<ObjModelWriter> vtx)
     {
-        boolean hasP = vtx.indices().containsKey(DefaultVertexFormat.ELEMENT_POSITION);
-        boolean hasT = vtx.indices().containsKey(DefaultVertexFormat.ELEMENT_UV0);
-        boolean hasN = vtx.indices().containsKey(DefaultVertexFormat.ELEMENT_NORMAL);
+        boolean hasP = vtx.indices().containsKey(VertexFormatElement.POSITION);
+        boolean hasT = vtx.indices().containsKey(VertexFormatElement.UV0);
+        boolean hasN = vtx.indices().containsKey(VertexFormatElement.NORMAL);
 
-        var str = (hasP ? String.format(Locale.ROOT, "%d", vtx.indices().get(DefaultVertexFormat.ELEMENT_POSITION) + 1) : "");
-        str += "/" + (hasT ? String.format(Locale.ROOT, "%d", vtx.indices().get(DefaultVertexFormat.ELEMENT_UV0) + 1) : "");
-        str += "/" + (hasN ? String.format(Locale.ROOT, "%d", vtx.indices().get(DefaultVertexFormat.ELEMENT_NORMAL) + 1) : "");
+        var str = (hasP ? String.format(Locale.ROOT, "%d", vtx.indices().get(VertexFormatElement.POSITION) + 1) : "");
+        str += "/" + (hasT ? String.format(Locale.ROOT, "%d", vtx.indices().get(VertexFormatElement.UV0) + 1) : "");
+        str += "/" + (hasN ? String.format(Locale.ROOT, "%d", vtx.indices().get(VertexFormatElement.NORMAL) + 1) : "");
         return str;
     }
 
@@ -62,19 +62,19 @@ public class ObjModelWriter extends ModelWriter<ObjModelWriter>
                     writer.write(String.format("usemtl %s\n", mesh.material().name()));
 
                     // position + color
-                    int cp = counts.getOrDefault(DefaultVertexFormat.ELEMENT_POSITION, 0);
-                    int rp = mesh.requireElements().getOrDefault(DefaultVertexFormat.ELEMENT_POSITION, 0);
+                    int cp = counts.getOrDefault(VertexFormatElement.POSITION, 0);
+                    int rp = mesh.requireElements().getOrDefault(VertexFormatElement.POSITION, 0);
 
-                    int cc = counts.getOrDefault(DefaultVertexFormat.ELEMENT_COLOR, 0);
-                    int rc = mesh.requireElements().getOrDefault(DefaultVertexFormat.ELEMENT_COLOR, 0);
+                    int cc = counts.getOrDefault(VertexFormatElement.COLOR, 0);
+                    int rc = mesh.requireElements().getOrDefault(VertexFormatElement.COLOR, 0);
 
                     boolean doColors = (rc-cc) == (rp-cp);
                     for(int ip=cp, ic=cc; ip<rp;ip++, ic++)
                     {
-                        var vp = elementDatas().get(DefaultVertexFormat.ELEMENT_POSITION).get(ip);
+                        var vp = elementDatas().get(VertexFormatElement.POSITION).get(ip);
                         if (doColors)
                         {
-                            var vc = elementDatas().get(DefaultVertexFormat.ELEMENT_COLOR).get(ic);
+                            var vc = elementDatas().get(VertexFormatElement.COLOR).get(ic);
                             writer.write(String.format("v %f %f %f %f %f %f\n", vp[0], vp[1], vp[2], vc[0]/255.0f, vc[1]/255.0f, vc[2]/255.0f));
                         }
                         else
@@ -82,30 +82,30 @@ public class ObjModelWriter extends ModelWriter<ObjModelWriter>
                             writer.write(String.format("v %f %f %f\n", vp[0], vp[1], vp[2]));
                         }
                     }
-                    counts.put(DefaultVertexFormat.ELEMENT_POSITION, rp);
-                    if(rc != cc) counts.put(DefaultVertexFormat.ELEMENT_COLOR, rc);
+                    counts.put(VertexFormatElement.POSITION, rp);
+                    if(rc != cc) counts.put(VertexFormatElement.COLOR, rc);
 
                     // tex coord
-                    int ct = counts.getOrDefault(DefaultVertexFormat.ELEMENT_UV0, 0);
-                    int rt = mesh.requireElements().getOrDefault(DefaultVertexFormat.ELEMENT_UV0, 0);
+                    int ct = counts.getOrDefault(VertexFormatElement.UV0, 0);
+                    int rt = mesh.requireElements().getOrDefault(VertexFormatElement.UV0, 0);
 
                     for(int i=ct; i<rt;i++)
                     {
-                        var vt = elementDatas().get(DefaultVertexFormat.ELEMENT_UV0).get(i);
+                        var vt = elementDatas().get(VertexFormatElement.UV0).get(i);
                         writer.write(String.format("vt %f %f\n", vt[0], 1-vt[1]));
                     }
-                    counts.put(DefaultVertexFormat.ELEMENT_UV0, rp);
+                    counts.put(VertexFormatElement.UV0, rp);
 
                     // normal
-                    int cn = counts.getOrDefault(DefaultVertexFormat.ELEMENT_NORMAL, 0);
-                    int rn = mesh.requireElements().getOrDefault(DefaultVertexFormat.ELEMENT_NORMAL, 0);
+                    int cn = counts.getOrDefault(VertexFormatElement.NORMAL, 0);
+                    int rn = mesh.requireElements().getOrDefault(VertexFormatElement.NORMAL, 0);
 
                     for(int i=cn; i<rn;i++)
                     {
-                        var vn = elementDatas().get(DefaultVertexFormat.ELEMENT_NORMAL).get(i);
+                        var vn = elementDatas().get(VertexFormatElement.NORMAL).get(i);
                         writer.write(String.format("vn %f %f %f\n", vn[0], vn[1], vn[2]));
                     }
-                    counts.put(DefaultVertexFormat.ELEMENT_NORMAL, rp);
+                    counts.put(VertexFormatElement.NORMAL, rp);
 
                     // faces
                     for(var face : mesh.faces())

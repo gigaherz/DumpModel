@@ -3,19 +3,22 @@ plugins {
     id 'eclipse'
     id 'idea'
     id 'maven-publish'
-    id 'net.neoforged.gradle.userdev' version '7.0.57'
-    id 'net.neoforged.gradle.mixin' version '7.0.57'
+    id 'net.neoforged.gradle.userdev' version '7.0.181'
 }
 
-version = '1.9.9'
+version = '1.10.0'
 group = 'dev.gigaherz.dumpmodel'
 
 
-base {
-    archivesName = "DumpModel-1.20.3"
+Provider<String> minecraftVersion(Transformer<String, String> mapper) {
+    return project.userDevRuntime.runtimes.map(r -> r.values().first().specification.minecraftVersion).map(mapper)
 }
 
-java.toolchain.languageVersion = JavaLanguageVersion.of(17)
+base {
+    archivesName = minecraftVersion { "DumpModel-${it}" }
+}
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
 
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8' // Use the UTF-8 charset for Java compilation
@@ -42,7 +45,7 @@ runs {
 }
 
 dependencies {
-    implementation 'net.neoforged:neoforge:20.3.3-beta'
+    implementation 'net.neoforged:neoforge:21.1.127'
 }
 
 jar {

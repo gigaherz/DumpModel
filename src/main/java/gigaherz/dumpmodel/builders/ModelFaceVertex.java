@@ -30,22 +30,22 @@ public class ModelFaceVertex<T extends ModelWriter<T>>
 
     public ModelFaceVertex<T> position(double x, double y, double z)
     {
-        return element(DefaultVertexFormat.ELEMENT_POSITION, x, y, z);
+        return element(VertexFormatElement.POSITION, x, y, z);
     }
 
     public ModelFaceVertex<T> tex(double u, double v)
     {
-        return element(DefaultVertexFormat.ELEMENT_UV0, u, v);
+        return element(VertexFormatElement.UV0, u, v);
     }
 
     public ModelFaceVertex<T> normal(double x, double y, double z)
     {
-        return element(DefaultVertexFormat.ELEMENT_NORMAL, x, y, z);
+        return element(VertexFormatElement.NORMAL, x, y, z);
     }
 
     public ModelFaceVertex<T> color(double r, double g, double b, double a)
     {
-        return element(DefaultVertexFormat.ELEMENT_COLOR, r, g, b, a);
+        return element(VertexFormatElement.COLOR, r, g, b, a);
     }
 
     public ModelFaceVertex<T> element(VertexFormatElement element, double... values)

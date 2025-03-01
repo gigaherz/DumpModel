@@ -173,18 +173,15 @@ public class VertexDumper implements MultiBufferSource
                 ModelFaceVertex<?> vertexBuilder = faceBuilder.vertex();
                 for (VertexFormatElement element : fmt.getElements())
                 {
-                    if (element.getUsage() != VertexFormatElement.Usage.PADDING)
+                    int index = element.index();
+                    vertexBuilder = switch (element.usage())
                     {
-                        int index = element.getIndex();
-                        vertexBuilder = switch (element.getUsage())
-                                {
-                                    case POSITION -> vertexBuilder.element(element, data.pos.x, data.pos.y, data.pos.z);
-                                    case UV -> vertexBuilder.element(element, data.uv[index].x, data.uv[index].y);
-                                    case NORMAL -> vertexBuilder.element(element, data.normal.x(), data.normal.y(), data.normal.z());
-                                    case COLOR -> vertexBuilder.element(element, data.color[0],data.color[1],data.color[2],data.color[3]);
-                                    default -> vertexBuilder;
-                                };
-                    }
+                        case POSITION -> vertexBuilder.element(element, data.pos.x, data.pos.y, data.pos.z);
+                        case UV -> vertexBuilder.element(element, data.uv[index].x, data.uv[index].y);
+                        case NORMAL -> vertexBuilder.element(element, data.normal.x(), data.normal.y(), data.normal.z());
+                        case COLOR -> vertexBuilder.element(element, data.color[0],data.color[1],data.color[2],data.color[3]);
+                        default -> vertexBuilder;
+                    };
                 }
                 faceBuilder = vertexBuilder.end();
 

@@ -1,6 +1,7 @@
 package gigaherz.dumpmodel.builders.writers;
 
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+import com.mojang.blaze3d.vertex.VertexFormatElement;
 
 import java.io.*;
 import java.nio.file.Path;
@@ -80,10 +81,10 @@ public class UsdModelWriter extends ModelWriter<UsdModelWriter>
 
     private void writeScene(OutputStreamWriter writer) throws IOException
     {
-        var posDatas = this.elementDatas().get(DefaultVertexFormat.ELEMENT_POSITION);
-        var nrmDatas = this.elementDatas().get(DefaultVertexFormat.ELEMENT_NORMAL);
-        var uv0Datas = this.elementDatas().get(DefaultVertexFormat.ELEMENT_UV0);
-        var clrDatas = this.elementDatas().get(DefaultVertexFormat.ELEMENT_COLOR);
+        var posDatas = this.elementDatas().get(VertexFormatElement.POSITION);
+        var nrmDatas = this.elementDatas().get(VertexFormatElement.NORMAL);
+        var uv0Datas = this.elementDatas().get(VertexFormatElement.UV0);
+        var clrDatas = this.elementDatas().get(VertexFormatElement.COLOR);
 
         for (var group : groups())
         {
@@ -113,11 +114,11 @@ public class UsdModelWriter extends ModelWriter<UsdModelWriter>
                     {
                         var ix = vtx.indices();
                         indices.add(positions.size());
-                        positions.add(posDatas.get(ix.get(DefaultVertexFormat.ELEMENT_POSITION)));
-                        normals.add(nrmDatas.get(ix.get(DefaultVertexFormat.ELEMENT_NORMAL)));
-                        uvs.add(uv0Datas.get(ix.get(DefaultVertexFormat.ELEMENT_UV0)));
+                        positions.add(posDatas.get(ix.get(VertexFormatElement.POSITION)));
+                        normals.add(nrmDatas.get(ix.get(VertexFormatElement.NORMAL)));
+                        uvs.add(uv0Datas.get(ix.get(VertexFormatElement.UV0)));
 
-                        var clr = clrDatas != null ? clrDatas.get(ix.get(DefaultVertexFormat.ELEMENT_COLOR)) : new double[]{1, 1, 1, 1};
+                        var clr = clrDatas != null ? clrDatas.get(ix.get(VertexFormatElement.COLOR)) : new double[]{1, 1, 1, 1};
 
                         clr[0] *= (1 / 255.0f);
                         clr[1] *= (1 / 255.0f);

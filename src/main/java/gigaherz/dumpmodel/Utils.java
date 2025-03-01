@@ -85,7 +85,7 @@ public class Utils
     }
 
     public static NativeImage downloadTexture(ResourceLocation texture) {
-        var id = Minecraft.getInstance().textureManager.getTexture(texture).getId();
+        var id = Minecraft.getInstance().getTextureManager().getTexture(texture).getId();
         RenderSystem.bindTexture(id);
         int width = GL11.glGetTexLevelParameteri(GL11.GL_TEXTURE_2D, 0, GL11.GL_TEXTURE_WIDTH);
         int height = GL11.glGetTexLevelParameteri(GL11.GL_TEXTURE_2D, 0, GL11.GL_TEXTURE_HEIGHT);
@@ -110,10 +110,10 @@ public class Utils
 
     public static double[] extractData(int[] data, int byteStart, VertexFormatElement element)
     {
-        switch (element.getType())
+        switch (element.type())
         {
             case FLOAT:
-                switch (element.getElementCount())
+                switch (element.count())
                 {
                     case 1:
                         return arrayOf(getFloatAt(data, byteStart));
@@ -126,7 +126,7 @@ public class Utils
                 }
                 break;
             case UBYTE:
-                switch (element.getElementCount())
+                switch (element.count())
                 {
                     case 1:
                         return arrayOf(getUByteAt(data, byteStart) / 255.0f);
@@ -139,7 +139,7 @@ public class Utils
                 }
                 break;
             case BYTE:
-                switch (element.getElementCount())
+                switch (element.count())
                 {
                     case 1:
                         return arrayOf(getByteAt(data, byteStart) / 127.0f);
@@ -152,7 +152,7 @@ public class Utils
                 }
                 break;
             case USHORT:
-                switch (element.getElementCount())
+                switch (element.count())
                 {
                     case 1:
                         return arrayOf(getUShortAt(data, byteStart));
@@ -165,7 +165,7 @@ public class Utils
                 }
                 break;
             case SHORT:
-                switch (element.getElementCount())
+                switch (element.count())
                 {
                     case 1:
                         return arrayOf(getShortAt(data, byteStart));
@@ -178,7 +178,7 @@ public class Utils
                 }
                 break;
             case UINT:
-                switch (element.getElementCount())
+                switch (element.count())
                 {
                     case 1:
                         return arrayOf(getUIntAt(data, byteStart));
@@ -191,7 +191,7 @@ public class Utils
                 }
                 break;
             case INT:
-                switch (element.getElementCount())
+                switch (element.count())
                 {
                     case 1:
                         return arrayOf(getIntAt(data, byteStart));
